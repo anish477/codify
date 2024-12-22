@@ -15,13 +15,13 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:Color(0xFFF9C222),
+      backgroundColor:const Color(0xFFF9C222),
       body:Column(
         children: <Widget>[
-          SizedBox(height: 135),
-          Image(image: AssetImage("assets/logo.png"),),
+          const SizedBox(height: 135),
+          const Image(image: AssetImage("assets/logo.png"),),
 
-          Text("Codify",style: TextStyle(fontSize: 80,fontWeight: FontWeight.w800,color: Colors.black,fontStyle: FontStyle.italic,letterSpacing:2),),
+          const Text("Codify",style: TextStyle(fontSize: 100,fontWeight: FontWeight.w800,color: Colors.black,fontStyle: FontStyle.italic,letterSpacing:6),),
 
           Center(
             child: Padding(
@@ -34,10 +34,10 @@ class _SplashState extends State<Splash> {
                         borderRadius: BorderRadius.circular(20.0)
 
                     ),
-                    backgroundColor: Color(0xFFFFFFFF),
+                    backgroundColor: const Color(0xFFFFFFFF),
 
 
-                    minimumSize: Size(325, 50)
+                    minimumSize: const Size(325, 50)
                 ),
                 onPressed: () {
                   Navigator.pushNamed(context, "/login");
@@ -55,7 +55,7 @@ class _SplashState extends State<Splash> {
 
 
           ),
-          SizedBox(height: 25),
+          const SizedBox(height: 25),
           // Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
           //
           // ),
@@ -63,7 +63,7 @@ class _SplashState extends State<Splash> {
             onTap: (){
               Navigator.pushNamed(context, "/signup");
             },
-            child: Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
+            child: const Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
             ),
           ),
 

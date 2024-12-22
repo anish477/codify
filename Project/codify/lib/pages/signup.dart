@@ -12,16 +12,18 @@ class _signupState extends State<Signup> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFFFFFFF),
 
       ),
       body: Center(
         child: Column(
           children: <Widget>[
-            Text("Start Learning"),
-            SizedBox(height: 35),
+            const Text("Start Learning",
+            style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.black),
+            ),
+            const SizedBox(height: 35),
             SizedBox(
               width: 350,
               height: 40,
@@ -36,7 +38,7 @@ class _signupState extends State<Signup> {
                 ),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
 
             SizedBox(
               width: 350,
@@ -51,7 +53,7 @@ class _signupState extends State<Signup> {
                 ),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             SizedBox(
               width: 350,
               height: 40,
@@ -66,7 +68,7 @@ class _signupState extends State<Signup> {
                 ),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             SizedBox(
               width: 350,
               height: 40,
@@ -81,26 +83,26 @@ class _signupState extends State<Signup> {
                 ),
               ),
             ),
-        SizedBox(height: 35),
+        const SizedBox(height: 35),
             ElevatedButton(
               style: TextButton.styleFrom(
                   side: const BorderSide(color: Colors.black, width: 2),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.0)
                   ),
-                  backgroundColor: Color(0xFFFFFFFF),
-                  minimumSize: Size(250, 50)
+                  backgroundColor: const Color(0xFFFFFFFF),
+                  minimumSize: const Size(250, 40)
               ),
               onPressed: (){ Navigator.pushNamed(context, "/login");},
-              child: Text("Sign Up",style: TextStyle(
+              child: const Text("Sign Up",style: TextStyle(
                 color: Colors.black,
               ),),
             ),
 
-            SizedBox(height: 35),
-            Text("Sign Up with",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
+            const SizedBox(height: 35),
+            const Text("Sign Up with",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
             ),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
 
@@ -108,9 +110,9 @@ class _signupState extends State<Signup> {
                 height: 70,
                 child: IconButton(onPressed: (){}, icon: Image.asset("assets/google.png") ,iconSize: 0.1,)),
 
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-            Text("Already have an account? Login",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
+            const Text("Already have an account? Login",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
             ),
 
           ],

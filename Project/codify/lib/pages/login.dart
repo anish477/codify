@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 
 
@@ -14,10 +13,10 @@ class _loginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
 
       appBar: AppBar(
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
 
       ),
       body: Center(
@@ -25,10 +24,12 @@ class _loginState extends State<Login> {
 
           children: <Widget>[
 
+            const SizedBox(height: 20),
 
-            Text("Welcome Learner" ,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.black),
+
+            const Text("Welcome Learner" ,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.black),
             ),
-            SizedBox(height: 35),
+            const SizedBox(height: 45),
             SizedBox(
               width: 350,
               height: 40,
@@ -42,7 +43,7 @@ class _loginState extends State<Login> {
                 ),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             SizedBox(
               width: 350,
               height: 40,
@@ -58,7 +59,7 @@ class _loginState extends State<Login> {
                 ),
               ),
             ),
-            SizedBox(height: 35),
+            const SizedBox(height: 35),
             ElevatedButton(
               onPressed: (){
 
@@ -68,26 +69,26 @@ class _loginState extends State<Login> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20.0)
                 ),
-                  backgroundColor: Color(0xFFFFFFFF),
+                  backgroundColor: const Color(0xFFFFFFFF),
 
-                  minimumSize: Size(250, 45)
+                  minimumSize: const Size(250, 45)
               ),
 
 
-              child: Text("Login", style: TextStyle(color: Colors.black)
+              child: const Text("Login", style: TextStyle(color: Colors.black)
 
                 ,
 
               ),
 
             ),
-            SizedBox(height: 35),
+            const SizedBox(height: 35),
 
 
-              Text(" Log in with ",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
+              const Text(" Log in with ",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
               ),
 
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
 
             SizedBox(
                 height: 70,
@@ -95,12 +96,12 @@ class _loginState extends State<Login> {
 
             
 
-           SizedBox(height: 25),
+           const SizedBox(height: 25),
             GestureDetector(
               onTap: (){
                 Navigator.pushNamed(context, "/signup");
               },
-              child: Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
+              child: const Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
               ),
             ),
 
