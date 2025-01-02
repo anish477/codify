@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import "package:codify/services/auth.dart";
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -9,6 +10,7 @@ class Signup extends StatefulWidget {
 }
 
 class _SignupState extends State<Signup> {
+  final AuthService _auth = AuthService();
   String email = '';
   String password = '';
   String error = '';
@@ -112,26 +114,16 @@ class _SignupState extends State<Signup> {
                     minimumSize: const Size(250, 40)),
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
-                    setState(() {
-                      isLoading = true; // Start loading
-                      error = ''; // Clear any previous errors
-                    });
-                    try {
-                      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                        email: email,
-                        password: password,
-                      );
-
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context);
-                    } on FirebaseAuthException catch (error) {
+                    final User? user = await _auth.createUserWithEmailAndPassword(
+                        email, password);
+                    if (user == null) {
                       setState(() {
-                        this.error = error.message ?? 'An unknown error occurred';
-                      });
-                    }  finally {
-                      setState(() {
+                        error = 'Could not sign up with those credentials';
                         isLoading = false;
                       });
+                    }
+                    else{
+                      Navigator.pop(context);
                     }
                   }
                 },

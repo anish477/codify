@@ -99,31 +99,23 @@ class _loginState extends State<Login> {
               ),
               const SizedBox(height: 35),
               if (isLoading) const CircularProgressIndicator() else ElevatedButton(
-                onPressed: (
-
-                    ) async{
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    try {
-                      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                          email: email,
-                          password: password
+                    setState(() {
+                      isLoading = true;
+                    });
+                    final User? user = await _auth.loginUserWithEmailAndPassword(email, password);
 
 
-                      );
-                      Navigator.pushNamed(context, "/home");
-                      print(credential);
-
-                    } on FirebaseAuthException catch (error) {
+                    if (user == null) {
                       setState(() {
-                        this.error = error.message ?? 'An unknown error occurred';
-                      });
-
-                    } finally {
-                      setState(() {
+                        error = 'Could not sign in with those credentials';
                         isLoading = false;
                       });
                     }
-
+                    else{
+                      Navigator.pushNamed(context, "/home");
+                    }
                   }
 
 
@@ -169,7 +161,12 @@ class _loginState extends State<Login> {
 
               SizedBox(
                   height: 70,
-                  child: IconButton(onPressed: (){}, icon: Image.asset("assets/google.png") ,iconSize: 0.1,)),
+                  child: IconButton(onPressed: () async {
+
+                   // await _auth.signInWithGoogle();
+
+
+                  }, icon: Image.asset("assets/google.png") ,iconSize: 0.1,)),
 
 
 
