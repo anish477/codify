@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:codify/services/auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 
 
 
@@ -104,7 +104,7 @@ class _loginState extends State<Login> {
                     setState(() {
                       isLoading = true;
                     });
-                    final User? user = await _auth.loginUserWithEmailAndPassword(email, password);
+                    final user = await _auth.loginUserWithEmailAndPassword(email, password);
 
 
                     if (user == null) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import "package:codify/services/auth.dart";
 
 class Signup extends StatefulWidget {
@@ -114,7 +113,7 @@ class _SignupState extends State<Signup> {
                     minimumSize: const Size(250, 40)),
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
-                    final User? user = await _auth.createUserWithEmailAndPassword(
+                    final user = await _auth.createUserWithEmailAndPassword(
                         email, password);
                     if (user == null) {
                       setState(() {
@@ -153,8 +152,20 @@ class _SignupState extends State<Signup> {
               SizedBox(
                   height: 70,
                   child: IconButton(
-                    onPressed: () {
-                      // Add Google Sign-In logic here
+                    onPressed: () async {
+
+                      setState(()  {
+                        isLoading = true;
+                      });
+                      final user = await _auth.signInWithGoogle();
+                      if (user == null) {
+                        setState(() {
+                          error = 'Google sign-in failed';
+                          isLoading = false;
+                        });
+                      } else {
+                        Navigator.pop(context);
+                      }
                     },
                     icon: Image.asset("assets/google.png"),
                     iconSize: 0.1,

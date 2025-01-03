@@ -17,29 +17,17 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -52,12 +40,53 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCICr4Zsf0R1gGxN0lOtiYIcvAsquUUQv0',
+    appId: '1:978010372188:web:9512b37a993aed4c288e99',
+    messagingSenderId: '978010372188',
+    projectId: 'codifyqq',
+    authDomain: 'codifyqq.firebaseapp.com',
+    storageBucket: 'codifyqq.firebasestorage.app',
+    measurementId: 'G-323SLBHT0F',
+  );
+
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCM-LYDtaOBQvf7vxvifDBywjVs4hTkikE',
-    appId: '1:978010372188:android:368415fb544fd6ec288e99',
+    appId: '1:978010372188:android:e1b70f16b99871a9288e99',
     messagingSenderId: '978010372188',
     projectId: 'codifyqq',
     storageBucket: 'codifyqq.firebasestorage.app',
   );
 
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAmIA3okwHmg7zzulS0P3z4GFF9W1OZDrQ',
+    appId: '1:978010372188:ios:c8414faaa5300d20288e99',
+    messagingSenderId: '978010372188',
+    projectId: 'codifyqq',
+    storageBucket: 'codifyqq.firebasestorage.app',
+    androidClientId: '978010372188-8vj6olfm05dqhj1pu4jrp2e5eke3octu.apps.googleusercontent.com',
+    iosClientId: '978010372188-7ihoh0sl9mgp255vnr8suhv8eq5u6sm4.apps.googleusercontent.com',
+    iosBundleId: 'com.example.codify',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAmIA3okwHmg7zzulS0P3z4GFF9W1OZDrQ',
+    appId: '1:978010372188:ios:c8414faaa5300d20288e99',
+    messagingSenderId: '978010372188',
+    projectId: 'codifyqq',
+    storageBucket: 'codifyqq.firebasestorage.app',
+    androidClientId: '978010372188-8vj6olfm05dqhj1pu4jrp2e5eke3octu.apps.googleusercontent.com',
+    iosClientId: '978010372188-7ihoh0sl9mgp255vnr8suhv8eq5u6sm4.apps.googleusercontent.com',
+    iosBundleId: 'com.example.codify',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCICr4Zsf0R1gGxN0lOtiYIcvAsquUUQv0',
+    appId: '1:978010372188:web:30cbe15d7815f938288e99',
+    messagingSenderId: '978010372188',
+    projectId: 'codifyqq',
+    authDomain: 'codifyqq.firebaseapp.com',
+    storageBucket: 'codifyqq.firebasestorage.app',
+    measurementId: 'G-JGHSWCXCCQ',
+  );
 }
