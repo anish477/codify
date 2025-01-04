@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:codify/services/auth.dart';
 
 void main()=>runApp(const MaterialApp(
+
   home: Home(),
 ));
 
@@ -12,12 +14,19 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final AuthService _auth = AuthService();
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text('Welcome to Codify'),
+        child: ElevatedButton(
+          onPressed: () async {
+            await _auth.signOut();
+          },
+          child: const Text('Logout'),
+        ),
       ),
+
 
 
     );
