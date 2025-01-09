@@ -15,17 +15,37 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final AuthService _auth = AuthService();
+  int currentPageIndex=0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await _auth.signOut();
-          },
-          child: const Text('Logout'),
+        bottomNavigationBar: NavigationBar(onDestinationSelected: (int index){
+          setState(() {
+            currentPageIndex=index;
+          });
+        },
+        indicatorColor: Colors.amber,
+        selectedIndex: currentPageIndex,
+        destinations: [
+          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.fitness_center), label: 'Traning'),
+          NavigationDestination(icon: Icon(Icons.leaderboard), label: 'Leaderboard'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+
+        ],
+        
         ),
-      ),
+
+      
+     
+      
+      body:  Column(
+          
+          children: <Widget>[
+           
+          ],
+        ),
+      
 
 
 
