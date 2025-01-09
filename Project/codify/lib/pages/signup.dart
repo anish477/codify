@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import "package:codify/services/auth.dart";
 
 class Signup extends StatefulWidget {
@@ -39,7 +38,7 @@ class _SignupState extends State<Signup> {
               const SizedBox(height: 35),
               SizedBox(
                 width: 350,
-                height: 40,
+                height: 60, // Added SizedBox with fixed height
                 child: TextFormField(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
@@ -67,7 +66,7 @@ class _SignupState extends State<Signup> {
               const SizedBox(height: 25),
               SizedBox(
                 width: 350,
-                height: 40,
+                height: 60, // Added SizedBox with fixed height
                 child: TextFormField(
                   obscureText: true,
                   decoration: InputDecoration(
@@ -76,27 +75,28 @@ class _SignupState extends State<Signup> {
                     ),
                     hintText: "Enter your password",
                     labelText: "Password",
-                  ),validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
-                    return 'Password must contain at least one uppercase letter';
-                  }
-                  if (!RegExp(r'(?=.*[a-z])').hasMatch(value)) {
-                    return 'Password must contain at least one lowercase letter';
-                  }
-                  if (!RegExp(r'(?=.*\d)').hasMatch(value)) {
-                    return 'Password must contain at least one digit';
-                  }
-                  if (!RegExp(r'(?=.*[@$!%*?&])').hasMatch(value)) {
-                    return 'Password must contain at least one special character';
-                  }
-                  return null;
-                },
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
+                      return 'Password must contain at least one uppercase letter';
+                    }
+                    if (!RegExp(r'(?=.*[a-z])').hasMatch(value)) {
+                      return 'Password must contain at least one lowercase letter';
+                    }
+                    if (!RegExp(r'(?=.*\d)').hasMatch(value)) {
+                      return 'Password must contain at least one digit';
+                    }
+                    if (!RegExp(r'(?=.*[@$!%*?&])').hasMatch(value)) {
+                      return 'Password must contain at least one special character';
+                    }
+                    return null;
+                  },
                   onChanged: (value) {
                     setState(() {
                       password = value;
@@ -114,17 +114,22 @@ class _SignupState extends State<Signup> {
                     minimumSize: const Size(250, 40)),
                 onPressed: () async {
                   if (_formKey.currentState?.validate() ?? false) {
-                    final User? user = await _auth.createUserWithEmailAndPassword(
+                    setState(() {
+                      isLoading = true;
+                    });
+                    final user = await _auth.createUserWithEmailAndPassword(
                         email, password);
                     if (user == null) {
                       setState(() {
                         error = 'Could not sign up with those credentials';
                         isLoading = false;
                       });
+
                     }
-                    else{
+                    else {
                       Navigator.pop(context);
                     }
+
                   }
                 },
                 child: const Text(
@@ -139,46 +144,23 @@ class _SignupState extends State<Signup> {
                 error,
                 style: const TextStyle(color: Colors.red, fontSize: 14),
               ),
-              const SizedBox(height: 35),
-              const Text(
-                "Sign Up with",
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.black54),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              SizedBox(
-                  height: 70,
-                  child: IconButton(
-                    onPressed: () {
-                      // Add Google Sign-In logic here
-                    },
-                    icon: Image.asset("assets/google.png"),
-                    iconSize: 0.1,
-                  )),
               const SizedBox(height: 30),
-              const Text(
-                "Already have an account? Login",
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.black54),
-              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "Already have an account? Login",
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black54),
+                ),
+              )
             ],
           ),
         ),
       ),
     );
-  }
-}
-class NextPage extends StatelessWidget {
-  const NextPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
   }
 }

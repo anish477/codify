@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:codify/pages/signup.dart';
+import 'package:codify/pages/login.dart';
 
 void main()=>runApp(const MaterialApp(
   home: Splash(),
@@ -40,7 +42,7 @@ class _SplashState extends State<Splash> {
                     minimumSize: const Size(325, 50)
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, "/login");
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>const Login()));
                 },
                 child:  const Text('Login',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.black),
 
@@ -61,7 +63,8 @@ class _SplashState extends State<Splash> {
           // ),
           GestureDetector(
             onTap: (){
-              Navigator.pushNamed(context, "/signup");
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>const Signup()));
+
             },
             child: const Text("Dont have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
             ),

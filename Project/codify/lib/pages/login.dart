@@ -1,6 +1,7 @@
+import 'package:codify/pages/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/services/auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 
 
 
@@ -38,12 +39,12 @@ class _loginState extends State<Login> {
               const SizedBox(height: 20),
 
 
-              const Text("Welcome Learner" ,style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.black),
+              const Text("Welcome Learner" ,style: TextStyle(fontSize: 30,fontWeight: FontWeight.bold,color: Colors.black),
               ),
               const SizedBox(height: 45),
               SizedBox(
                 width: 350,
-                height: 40,
+                height: 60,
                 child: TextFormField(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
@@ -68,7 +69,7 @@ class _loginState extends State<Login> {
               const SizedBox(height: 25),
               SizedBox(
                 width: 350,
-                height: 40,
+                height: 60,
                 child: TextFormField(
 
                   obscureText: true,
@@ -104,7 +105,7 @@ class _loginState extends State<Login> {
                     setState(() {
                       isLoading = true;
                     });
-                    final User? user = await _auth.loginUserWithEmailAndPassword(email, password);
+                    final user = await _auth.loginUserWithEmailAndPassword(email, password);
 
 
                     if (user == null) {
@@ -113,9 +114,8 @@ class _loginState extends State<Login> {
                         isLoading = false;
                       });
                     }
-                    else{
-                      Navigator.pushNamed(context, "/home");
-                    }
+                    
+
                   }
 
 
@@ -163,8 +163,17 @@ class _loginState extends State<Login> {
                   height: 70,
                   child: IconButton(onPressed: () async {
 
-                   // await _auth.signInWithGoogle();
+                    setState(()  {
+                      isLoading = true;
+                    });
+                    final user = await _auth.signInWithGoogle();
+                    if (user == null) {
+                      setState(() {
+                        error = 'Google sign-in failed';
+                        isLoading = false;
+                      });
 
+                    }
 
                   }, icon: Image.asset("assets/google.png") ,iconSize: 0.1,)),
 
@@ -173,7 +182,7 @@ class _loginState extends State<Login> {
              const SizedBox(height: 25),
               GestureDetector(
                 onTap: (){
-                  Navigator.pushNamed(context, "/signup");
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>const Signup()));
                 },
                 child: const Text("Don't have an account? Sign Up",style: TextStyle(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.black54),
                 ),
