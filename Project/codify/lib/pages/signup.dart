@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import "package:codify/services/auth.dart";
+import 'package:codify/pages/home.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
