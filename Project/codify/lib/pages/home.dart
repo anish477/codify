@@ -34,10 +34,10 @@ class _HomeState extends State<Home> {
         indicatorColor: Colors.amber,
         selectedIndex: currentPageIndex,
         destinations: const [
-          NavigationDestination(selectedIcon: Icon(LucideIcons.home),icon:  Icon(LucideIcons.home) , label: 'Home'),
-          NavigationDestination(selectedIcon: Icon(LucideIcons.dumbbell),icon:  Icon(LucideIcons.dumbbell) , label: 'Traning'),
-          NavigationDestination(selectedIcon: Icon(LucideIcons.award), icon:Icon(LucideIcons.award) , label: 'Leaderboard'),
-          NavigationDestination(selectedIcon: Icon(LucideIcons.user), icon: Icon(LucideIcons.user), label: 'Profile'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.home,),icon:  Icon(LucideIcons.home,color: Colors.amber) , label: 'Home'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.dumbbell),icon:  Icon(LucideIcons.dumbbell,color: Colors.blue,) , label: 'Traning'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.award), icon:Icon(LucideIcons.award,color: Colors.green) , label: 'Leaderboard'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.user), icon: Icon(LucideIcons.user,color: Colors.redAccent), label: 'Profile'),
 
         ],
         
