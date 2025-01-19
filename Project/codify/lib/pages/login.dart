@@ -1,6 +1,7 @@
 import 'package:codify/pages/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/services/auth.dart';
+import 'package:codify/admin/admin_service.dart';
 
 
 
@@ -10,14 +11,28 @@ class Login extends StatefulWidget {
 
   @override
   State<Login> createState() => _loginState();
+
+
 }
+
+Future<void>_loadadmin()async{
+  final adminService = AdminService();
+  final users = await adminService.getUsers();
+  print(users);
+}
+
 
 class _loginState extends State<Login> {
   final AuthService _auth = AuthService();
+  final AdminService _adminService = AdminService();
   String email = '';
   String password = '';
   String error = '';
   bool isLoading = false;
+  String dbemail = '';
+  String dbpassword = '';
+  String dbrole = '';
+
 
   final _formKey = GlobalKey<FormState>();
   @override
@@ -102,10 +117,15 @@ class _loginState extends State<Login> {
               if (isLoading) const CircularProgressIndicator() else ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+
                     setState(() {
                       isLoading = true;
                     });
                     final user = await _auth.loginUserWithEmailAndPassword(email, password);
+
+
+
+
 
 
                     if (user == null) {
@@ -114,7 +134,7 @@ class _loginState extends State<Login> {
                         isLoading = false;
                       });
                     }
-                    
+
 
                   }
 
