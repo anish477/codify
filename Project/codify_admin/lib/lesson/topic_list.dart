@@ -69,7 +69,7 @@ class _TopicListState extends State<TopicList> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TopicContent(),
+                          builder: (context) => TopicContent( topicId: _topics[index].documentId),
                         ),
                       );
                     },
