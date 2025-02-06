@@ -89,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'codifyqq.firebasestorage.app',
     measurementId: 'G-JGHSWCXCCQ',
   );
+
 }

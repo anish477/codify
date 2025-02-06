@@ -5,7 +5,7 @@ import 'topic_service.dart';
 class AddTopicScreen extends StatefulWidget {
   final String categoryId;
 
-  const AddTopicScreen({Key? key, required this.categoryId}) : super(key: key);
+  const AddTopicScreen({super.key, required this.categoryId});
 
   @override
   _AddTopicScreenState createState() => _AddTopicScreenState();
@@ -25,7 +25,7 @@ class _AddTopicScreenState extends State<AddTopicScreen> {
   Future<void> _addTopic() async {
     if (_formKey.currentState!.validate()) {
       final newTopic = Topic(
-        documentId: '', // Firestore will generate the ID
+        documentId: '',
         name: _nameController.text,
         categoryId: widget.categoryId,
         lessonIds: [],

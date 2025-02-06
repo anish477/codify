@@ -1,9 +1,10 @@
-import 'package:codify_admin/lesson/topic_content.dart';
+
+import 'package:codify/lesson/topic_content.dart';
 import 'package:flutter/material.dart';
 import 'topic.dart';
 import 'topic_service.dart';
 import 'category.dart';
-import 'add_topic.dart';
+
 
 class TopicList extends StatefulWidget {
   final Category category;
@@ -31,19 +32,7 @@ class _TopicListState extends State<TopicList> {
     });
   }
 
-  Future<void> _addTopic() async {
-    final newTopic = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => AddTopicScreen(categoryId: widget.category.documentId),
-      ),
-    );
 
-    if (newTopic != null) {
-      setState(() {
-        _topics.add(newTopic);
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,10 +68,7 @@ class _TopicListState extends State<TopicList> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addTopic,
-        child: Icon(Icons.add),
-      ),
+
     );
   }
 }

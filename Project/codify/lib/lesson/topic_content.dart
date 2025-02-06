@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'add_lesson.dart';
+
 import 'lesson.dart';
 import 'lesson_service.dart';
-<<<<<<< HEAD
 import 'question_content.dart';
-=======
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
 
 class TopicContent extends StatefulWidget {
   final String topicId;
@@ -33,23 +30,6 @@ class _TopicContentState extends State<TopicContent> {
     });
   }
 
-  Future<void> _addLesson() async {
-    final newLesson = await Navigator.of(context).push(
-      MaterialPageRoute(
-<<<<<<< HEAD
-        builder: (context) => AddLesson(topicId: widget.topicId),
-=======
-        builder: (context) => AddLessonScreen(topicId: widget.topicId),
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
-      ),
-    );
-
-    if (newLesson != null) {
-      setState(() {
-        _lessons.add(newLesson);
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +37,6 @@ class _TopicContentState extends State<TopicContent> {
       appBar: AppBar(
         title: const Text('Topic Content'),
       ),
-<<<<<<< HEAD
       body: ListView.separated(
 
         itemCount: _lessons.length,
@@ -80,20 +59,8 @@ class _TopicContentState extends State<TopicContent> {
         },
 
         separatorBuilder: (context, index) => const SizedBox(height: 8),
-=======
-      body: ListView.builder(
-        itemCount: _lessons.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(_lessons[index].questionName),
-          );
-        },
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addLesson,
-        child: const Icon(Icons.add),
-      ),
+
     );
   }
 }

@@ -39,23 +39,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       appBar: AppBar(
         title: const Text('Add Category'),
         actions: [
-          ElevatedButton(
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                final name = _nameController.text;
 
-                final category = Category(
-                  documentId: '', // Provide a default value for documentId
-                  name: name,
-                  lessonIds: [],
-                );
-
-                await _saveCategoryToFirestore(category);
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text("Save Category"),
-          )
         ],
       ),
       body: Padding(
@@ -79,7 +63,26 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     return null;
                   },
                 ),
+
               ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final name = _nameController.text;
+
+                    final category = Category(
+                      documentId: '', // Provide a default value for documentId
+                      name: name,
+                      lessonIds: [],
+                    );
+
+                    await _saveCategoryToFirestore(category);
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text("Save Category"),
+              ),
+              Text("Delete "),
             ],
           ),
         ),

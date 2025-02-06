@@ -4,6 +4,7 @@ import 'package:codify_admin/lesson/topic_list.dart';
 import 'package:codify_admin/lesson/add_category.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:codify_admin/lesson/category.dart';
+import '../lesson/category_service.dart';
 
 enum SampleItem { logout }
 
@@ -120,8 +121,8 @@ class _HomeState extends State<Home> {
                 ),
               );
             },
-            child: const Icon(Icons.category),
             heroTag: null,
+            child: const Icon(Icons.category),
           ),
         ],
       ),

@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class Question {
 
@@ -14,16 +14,16 @@ class Question {
   final String lessonId;
 
   Question({
-  this.documentId = '',
-  required this.title,
-  required this.content,
-  required this.difficulty,
-  required this.rewards,
-  required this.questionText,
-  required this.options,
-  required this.correctOption,
-  required this.feedback,
-  required this.lessonId,
+    this.documentId = '',
+    required this.title,
+    required this.content,
+    required this.difficulty,
+    required this.rewards,
+    required this.questionText,
+    required this.options,
+    required this.correctOption,
+    required this.feedback,
+    required this.lessonId,
   });
 
   // Factory constructor to create a Question object from a Map
@@ -41,21 +41,5 @@ class Question {
       feedback: map['feedback'] as String,
       lessonId: map['lessonId'] as String,
     );
-  }
-
-  // Method to convert a Question object to a Map
-  Map<String, dynamic> toMap() {
-    return {
-      'documentId': documentId,
-      'title': title,
-      'content': content,
-      'difficulty': difficulty,
-      'rewards': rewards,
-      'questionText': questionText,
-      'options': options,
-      'correctOption': correctOption,
-      'feedback': feedback,
-      'lessonId': lessonId,
-    };
   }
 }
