@@ -13,7 +13,7 @@ class QuestionDetailScreen extends StatefulWidget {
 
 class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
   final QuestionService _questionService = QuestionService();
-  Question? _question; // Store the fetched question
+  Question? _question;
 
   @override
   void initState() {
