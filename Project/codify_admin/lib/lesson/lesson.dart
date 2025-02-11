@@ -28,4 +28,13 @@ class Lesson {
       questionName: doc['questionName'],
     );
   }
+
+
+  Lesson copyWith({String? documentId, String? topicId, String? questionName}) {
+    return Lesson(
+      documentId: documentId ?? this.documentId,
+      topicId: topicId ?? this.topicId,
+      questionName: questionName ?? this.questionName,
+    );
+  }
 }

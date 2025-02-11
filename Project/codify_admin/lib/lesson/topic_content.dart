@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'add_lesson.dart';
+import 'edit_lesson.dart';
 import 'lesson.dart';
 import 'lesson_service.dart';
-<<<<<<< HEAD
 import 'question_content.dart';
-=======
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
 
 class TopicContent extends StatefulWidget {
   final String topicId;
@@ -36,11 +34,7 @@ class _TopicContentState extends State<TopicContent> {
   Future<void> _addLesson() async {
     final newLesson = await Navigator.of(context).push(
       MaterialPageRoute(
-<<<<<<< HEAD
         builder: (context) => AddLesson(topicId: widget.topicId),
-=======
-        builder: (context) => AddLessonScreen(topicId: widget.topicId),
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
       ),
     );
 
@@ -51,21 +45,68 @@ class _TopicContentState extends State<TopicContent> {
     }
   }
 
+  Future<void> _editLesson(Lesson lesson) async {
+    final updatedLesson = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditLesson(lesson: lesson),
+      ),
+    );
+
+    if (updatedLesson != null) {
+      setState(() {
+        final index = _lessons.indexWhere((l) => l.documentId == updatedLesson.documentId);
+        if (index != -1) {
+          _lessons[index] = updatedLesson;
+        }
+      });
+    }
+  }
+
+  Future<void> _deleteLesson(String documentId) async {
+    await _lessonService.deleteLesson(documentId);
+    setState(() {
+      _lessons.removeWhere((lesson) => lesson.documentId == documentId);
+    });
+  }
+
+  Future<void> _confirmDeleteLesson(String documentId) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Lesson'),
+          content: const Text('Are you sure you want to delete this lesson?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      _deleteLesson(documentId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Topic Content'),
       ),
-<<<<<<< HEAD
       body: ListView.separated(
-
         itemCount: _lessons.length,
         itemBuilder: (context, index) {
           return Container(
             color: Colors.grey[200],
             child: ListTile(
-
               title: Text(_lessons[index].questionName),
               onTap: () {
                 Navigator.push(
@@ -75,20 +116,23 @@ class _TopicContentState extends State<TopicContent> {
                   ),
                 );
               },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () => _editLesson(_lessons[index]),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _confirmDeleteLesson(_lessons[index].documentId),
+                  ),
+                ],
+              ),
             ),
           );
         },
-
         separatorBuilder: (context, index) => const SizedBox(height: 8),
-=======
-      body: ListView.builder(
-        itemCount: _lessons.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(_lessons[index].questionName),
-          );
-        },
->>>>>>> f0a891753fed7f6034e8d59a3330b7187acbf294
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addLesson,

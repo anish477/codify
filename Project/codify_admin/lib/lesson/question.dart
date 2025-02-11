@@ -58,4 +58,33 @@ class Question {
       'lessonId': lessonId,
     };
   }
+
+
+  Question copyWith({
+    String? documentId,
+    String? title,
+    String? content,
+    String? difficulty,
+    int? rewards,
+    String? questionText,
+    List<String>? options,
+    int? correctOption,
+    String? feedback,
+    String? lessonId,
+  }) {
+    return Question(
+      documentId: documentId ?? this.documentId,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      difficulty: difficulty ?? this.difficulty,
+      rewards: rewards ?? this.rewards,
+      questionText: questionText ?? this.questionText,
+      options: options ?? this.options,
+      correctOption: correctOption ?? this.correctOption,
+      feedback: feedback ?? this.feedback,
+      lessonId: lessonId ?? this.lessonId,
+    );
+  }
+
+
 }

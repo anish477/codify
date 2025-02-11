@@ -5,6 +5,7 @@ import 'package:codify_admin/lesson/add_category.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:codify_admin/lesson/category.dart';
 import '../lesson/category_service.dart';
+import '../lesson/edit_category.dart';
 
 enum SampleItem { logout }
 
@@ -17,6 +18,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final AuthService _auth = AuthService();
+  final CategoryService _categoryService = CategoryService();
   SampleItem? selectedItem;
 
   void _showLogout(BuildContext context) {
@@ -43,6 +45,49 @@ class _HomeState extends State<Home> {
         );
       },
     );
+  }
+
+  Future<void> _editCategory(Category category) async {
+    final updatedCategory = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditCategoryScreen(category: category),
+      ),
+    );
+
+    if (updatedCategory != null) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _confirmDeleteCategory(String documentId) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Category'),
+          content: const Text('Are you sure you want to delete this category?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      await _deleteCategory(documentId);
+    }
+  }
+
+  Future<void> _deleteCategory(String documentId) async {
+    await _categoryService.deleteCategory(documentId);
+    setState(() {});
   }
 
   @override
@@ -93,22 +138,29 @@ class _HomeState extends State<Home> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TopicList(lesson: null, category: category),
+                      builder: (context) => TopicList(category: category),
                     ),
                   );
                 },
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () => _editCategory(category),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () => _confirmDeleteCategory(category.documentId),
+                    ),
+                  ],
+                ),
               );
-
-
             },
             separatorBuilder: (context, index) => const SizedBox(height: 8),
-
           );
-
-
         },
       ),
-
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

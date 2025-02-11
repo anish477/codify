@@ -155,7 +155,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 title: Text(option),
                 onTap: () => _checkAnswer(idx),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 8),
           ],
         ),

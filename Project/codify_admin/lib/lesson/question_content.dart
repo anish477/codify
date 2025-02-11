@@ -3,6 +3,7 @@ import 'question.dart';
 import 'question_service.dart';
 import 'add_question.dart';
 import 'question_detail.dart';
+import 'edit_question.dart';
 
 class QuestionListScreen extends StatefulWidget {
   final String lessonId;
@@ -30,6 +31,56 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
     });
   }
 
+  Future<void> _editQuestion(Question question) async {
+    final updatedQuestion = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditQuestionScreen(question: question),
+      ),
+    );
+
+    if (updatedQuestion != null) {
+      setState(() {
+        final index = _questions.indexWhere((q) => q.documentId == updatedQuestion.documentId);
+        if (index != -1) {
+          _questions[index] = updatedQuestion;
+        }
+      });
+    }
+  }
+
+  Future<void> _deleteQuestion(String documentId) async {
+    await _questionService.deleteQuestion(documentId);
+    setState(() {
+      _questions.removeWhere((question) => question.documentId == documentId);
+    });
+  }
+
+  Future<void> _confirmDeleteQuestion(String documentId) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Question'),
+          content: const Text('Are you sure you want to delete this question?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      _deleteQuestion(documentId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,13 +96,27 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
             child: ListTile(
               title: Text(question.title),
               subtitle: Text(question.questionText),
-
               onTap: () {
-
                 Navigator.push(
-                  context,MaterialPageRoute(builder: (context) => QuestionDetailScreen(documentId: _questions[index].documentId,)),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QuestionDetailScreen(documentId: question.documentId),
+                  ),
                 );
               },
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: () => _editQuestion(question),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _confirmDeleteQuestion(question.documentId),
+                  ),
+                ],
+              ),
             ),
           );
         },

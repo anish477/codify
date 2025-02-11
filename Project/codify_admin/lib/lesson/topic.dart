@@ -29,4 +29,13 @@ class Topic {
       'lessonIds': lessonIds,
     };
   }
+
+  Topic copyWith({String? documentId, String? name, String? categoryId, List<String>? lessonIds}) {
+    return Topic(
+      documentId: documentId ?? this.documentId,
+      name: name ?? this.name,
+      categoryId: categoryId ?? this.categoryId,
+      lessonIds: lessonIds ?? this.lessonIds,
+    );
+  }
 }

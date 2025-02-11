@@ -3,7 +3,7 @@ import 'category.dart';
 
 class CategoryService {
   final CollectionReference _categoriesCollection =
-  FirebaseFirestore.instance.collection('Categories');
+  FirebaseFirestore.instance.collection('categories');
 
   // Create a new category
   Future<Category?> createCategory(Category category) async {

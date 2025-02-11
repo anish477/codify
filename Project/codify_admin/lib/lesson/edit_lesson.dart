@@ -2,19 +2,25 @@ import 'package:flutter/material.dart';
 import 'lesson.dart';
 import 'lesson_service.dart';
 
-class AddLesson extends StatefulWidget {
-  final String topicId;
+class EditLesson extends StatefulWidget {
+  final Lesson lesson;
 
-  const AddLesson({super.key, required this.topicId});
+  const EditLesson({super.key, required this.lesson});
 
   @override
-  _AddLessonState createState() => _AddLessonState();
+  _EditLessonState createState() => _EditLessonState();
 }
 
-class _AddLessonState extends State<AddLesson> {
+class _EditLessonState extends State<EditLesson> {
   final _formKey = GlobalKey<FormState>();
-  final _questionNameController = TextEditingController();
+  late TextEditingController _questionNameController;
   final LessonService _lessonService = LessonService();
+
+  @override
+  void initState() {
+    super.initState();
+    _questionNameController = TextEditingController(text: widget.lesson.questionName);
+  }
 
   @override
   void dispose() {
@@ -22,22 +28,14 @@ class _AddLessonState extends State<AddLesson> {
     super.dispose();
   }
 
-  Future<void> _addLesson() async {
+  Future<void> _updateLesson() async {
     if (_formKey.currentState!.validate()) {
-      final newLesson = Lesson(
-        documentId: '', // Firestore will generate the ID
-        topicId: widget.topicId,
+      final updatedLesson = widget.lesson.copyWith(
         questionName: _questionNameController.text,
       );
 
-      final createdLesson = await _lessonService.createLesson(newLesson);
-      if (createdLesson != null) {
-        Navigator.of(context).pop(createdLesson);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error creating lesson')),
-        );
-      }
+      await _lessonService.updateLesson(updatedLesson);
+      Navigator.of(context).pop(updatedLesson);
     }
   }
 
@@ -45,7 +43,7 @@ class _AddLessonState extends State<AddLesson> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Lesson'),
+        title: const Text('Edit Lesson'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -65,8 +63,8 @@ class _AddLessonState extends State<AddLesson> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _addLesson,
-                child: const Text('Add Lesson'),
+                onPressed: _updateLesson,
+                child: const Text('Update Lesson'),
               ),
             ],
           ),

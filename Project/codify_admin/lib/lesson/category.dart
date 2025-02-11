@@ -20,4 +20,12 @@ class Category {
       'lessonIds': lessonIds,
     };
   }
+
+  Category copyWith({String? name, List<String>? lessonIds}) {
+    return Category(
+      documentId: documentId,
+      name: name ?? this.name,
+      lessonIds: lessonIds ?? this.lessonIds,
+    );
+  }
 }

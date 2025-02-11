@@ -161,7 +161,7 @@ class _TrainingMistakeState extends State<TrainingMistake> {
                         title: Text(option),
                         onTap: () => _checkAnswer(idx, question),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
