@@ -28,7 +28,7 @@ class Leaderboard {
     return {
       'userId': userId,
       'points': points,
-      'timestamp': Timestamp.fromDate(timestamp),
+      'timestamp': timestamp,
     };
   }
 

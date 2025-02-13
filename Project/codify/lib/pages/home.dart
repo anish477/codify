@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:codify/services/auth.dart';
 import 'package:codify/pages/profile.dart';
 import 'package:codify/pages/training.dart';
-import 'package:codify/pages/leaderboard.dart';
+import 'package:codify/pages/leaderboard_content.dart';
 import 'package:codify/pages/lesson_main.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -49,7 +49,7 @@ class _HomeState extends State<Home> {
       body:  <Widget>[
          LessonMain(),
         Training(),
-         Leaderboard(),
+         LeaderboardPage(),
       
         Profile(),
 

@@ -5,9 +5,6 @@ class AuthService {
   final _auth = FirebaseAuth.instance;
   final _googleSignIn = GoogleSignIn();
 
-  // Stream<User?> authStateChanges() {
-  //   return _auth.authStateChanges();
-  // }
   Future<String?> getUID() async {
     final User? user = _auth.currentUser;
     if (user != null) {
@@ -20,6 +17,9 @@ class AuthService {
 
   Future<User?> signInWithGoogle() async {
     try {
+
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return null;

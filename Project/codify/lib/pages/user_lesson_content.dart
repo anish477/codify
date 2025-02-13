@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../gamification/leaderboard.dart';
 import '../lesson/question.dart';
 import '../lesson/question_service.dart';
 import '../user/user_mistake.dart';
 import '../user/user_mistake_service.dart';
 import '../services/auth.dart';
+import '../gamification/leaderboard_service.dart';
 
 class UserLessonContent extends StatefulWidget {
   final String documentId;
@@ -18,11 +20,13 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final QuestionService _questionService = QuestionService();
   final UserMistakeService _userMistakeService = UserMistakeService();
   final AuthService _auth = AuthService();
+  final LeaderboardService _leaderboardService = LeaderboardService();
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
   bool _isCorrectAnswer = false;
   bool _showFeedback = false;
   bool _isLoading = true;
+  int lessonPoints = 0;
 
   @override
   void initState() {
@@ -52,20 +56,31 @@ class _UserLessonContentState extends State<UserLessonContent> {
       setState(() {
         _isCorrectAnswer = true;
         _showFeedback = true;
-        if (_currentQuestionIndex < _questions.length - 1) {
-          _currentQuestionIndex++;
-        } else {
-          Navigator.pop(context);
-        }
       });
+      lessonPoints += _questions[_currentQuestionIndex].rewards; // Add rewards to lessonPoints
+      if (_currentQuestionIndex < _questions.length - 1) {
+        setState(() {
+          _currentQuestionIndex++;
+        });
+      } else {
+        // Push the points to the leaderboard
+        final user = await _auth.getUID();
+        if (user != null) {
+          await _leaderboardService.addLeaderboardEntry(Leaderboard(
+            userId: user,
+            points: lessonPoints,
+            timestamp: DateTime.now(),
+            documentId: '',
+          ));
+        }
+        Navigator.pop(context);
+      }
     } else {
       setState(() {
         _isCorrectAnswer = false;
         _showFeedback = true;
       });
-    }
-    //to push the mistake to the user_mistakes collection
-    if (!_isCorrectAnswer) {
+      // Push the mistake to the user_mistakes collection
       final user = await _auth.getUID();
       if (user != null) {
         _userMistakeService.createUserMistake(UserMistake(
