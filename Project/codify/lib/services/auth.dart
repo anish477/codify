@@ -97,20 +97,21 @@ class AuthService {
       print("Error during sign-out: $e");
     }
   }
-  Future<void> sendPasswordResetEmail(String email) async {
+  Future<String> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
 
-      if (e.code == 'auth/user-not-found') {
-        throw Exception('No user found for that email.');
+      if (e.code == 'auth/ invalid-email') {
+        return 'No user found for that email.';
       } else {
-        throw Exception('An error occurred: ${e.message}');
+        return ' ${e.message}';
       }
     } catch (e) {
-      // Handle other exceptions
-      throw Exception('An error occurred: $e');
+
+      return 'An error occurred: $e';
     }
+    return '';
   }
 
 

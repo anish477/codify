@@ -18,11 +18,11 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // Set background color
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), // Set app bar color
-        elevation: 0, // Remove shadow
-        iconTheme: const IconThemeData(color: Colors.black), // Set back button color
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Center(
         child: Padding(
@@ -56,7 +56,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      // You might want to add more robust email validation here
+                      // Email format validation
+                      if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
                       return null;
                     },
                     onChanged: (value) {
@@ -77,20 +80,26 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                           isLoading = true;
                           error = '';
                         });
+
                         try {
-                          await _auth.sendPasswordResetEmail(email);
-                          // Show a success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Password reset email sent. Check your inbox.'),
-                            ),
-                          );
-                          Navigator.pop(context); // Go back to the login screen
+                          final data = await _auth.sendPasswordResetEmail(email);
+
+                          setState(() {
+                            isLoading = false;
+                          });
+
+
+                          if (data.isEmpty) {
+                            _showDialog();
+                          } else {
+                            setState(() {
+                              error = data;
+                            });
+                          }
                         } catch (e) {
                           setState(() {
-                            error = e.toString().replaceAll('Exception: ', '');
                             isLoading = false;
+                            error = 'An error occurred. Please try again.';
                           });
                         }
                       }
@@ -100,7 +109,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0),
                       ),
-                      backgroundColor: const Color(0xFFFFFFFF),
+                      backgroundColor: Colors.white,
                       minimumSize: const Size(250, 45),
                     ),
                     child: const Text(
@@ -119,6 +128,29 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Link sent!'),
+          content: const Text('Password reset email sent. Check your inbox.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
