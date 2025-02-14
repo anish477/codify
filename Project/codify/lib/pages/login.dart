@@ -1,6 +1,7 @@
 import 'package:codify/pages/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/services/auth.dart';
+import 'forget_password.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -96,14 +97,18 @@ class _LoginState extends State<Login> {
                     if (_formKey.currentState!.validate()) {
                       setState(() {
                         isLoading = true;
+                        error = '';
                       });
                       final user = await _auth.loginUserWithEmailAndPassword(email, password);
-                      if (user == null) {
-                        setState(() {
-                          error = 'Could not sign in with those credentials';
-                          isLoading = false;
-                        });
-                      }
+                      setState(() {
+                        isLoading = false;
+                        if (user is String) {
+                          error = user;
+                        }
+                        else if(user==null){
+                          error='';
+                        }
+                      });
                     }
                   },
                   style: TextButton.styleFrom(
@@ -119,14 +124,31 @@ class _LoginState extends State<Login> {
                     style: TextStyle(color: Colors.black),
                   ),
                 ),
-              SizedBox(
-                height: 28,
-                child: Text(
-                  error,
-                  style: const TextStyle(color: Colors.red, fontSize: 14.0),
+              if (error.isNotEmpty) // Only show error if it's not empty
+                SizedBox(
+                  height: 28,
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: Colors.red, fontSize: 14.0),
+                  ),
+                ),
+              const SizedBox(height: 35),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ForgotPassword()),
+                  );
+                },
+                child: const Text(
+                  "Forgot Password?",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 10),
               const Text(
                 "Log in with",
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal, color: Colors.black54),
@@ -138,14 +160,15 @@ class _LoginState extends State<Login> {
                   onPressed: () async {
                     setState(() {
                       isLoading = true;
+                      error = ''; // Clear any previous error
                     });
                     final user = await _auth.signInWithGoogle();
-                    if (user == null) {
-                      setState(() {
+                    setState(() {
+                      isLoading = false;
+                      if (user == null) {
                         error = 'Google sign-in failed';
-                        isLoading = false;
-                      });
-                    }
+                      }
+                    });
                   },
                   icon: Image.asset("assets/google.png"),
                   iconSize: 0.1,

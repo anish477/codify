@@ -119,13 +119,16 @@ class _SignupState extends State<Signup> {
                     });
                     final user = await _auth.createUserWithEmailAndPassword(
                         email, password);
-                    if (user == null) {
-                      setState(() {
-                        error = 'Could not sign up with those credentials';
-                        isLoading = false;
-                      });
+                    setState(() {
+                      isLoading = false;
+                    });
 
+                    if (user is String){
+                      error=user;
+                      isLoading=false;
                     }
+
+
                     else {
                       Navigator.pop(context);
                     }

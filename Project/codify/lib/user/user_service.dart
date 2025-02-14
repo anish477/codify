@@ -52,18 +52,7 @@ class UserService {
     }
   }
 
-  // Future<UserDetail?> getUserByUserIdRedirect(String userId) async {
-  //   final querySnapshot = await _userCollection
-  //       .where('userId', isEqualTo: userId)
-  //       .where('hasBeenRedirected', isEqualTo: false)
-  //       .get();
-  //
-  //   if (querySnapshot.docs.isNotEmpty) {
-  //     return UserDetail.fromDocument(querySnapshot.docs.first);
-  //   } else {
-  //     return null;
-  //   }
-  // }
+
 
 
 

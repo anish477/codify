@@ -37,30 +37,56 @@ class AuthService {
     }
   }
 
-  Future<User?> createUserWithEmailAndPassword(String email, String password) async {
+  Future<Object?> createUserWithEmailAndPassword(String email, String password) async {
     try {
       final UserCredential cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       return cred.user;
-    } catch (e) {
+    }on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        return 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        return'The account already exists for that email.';
+      }
+    }
+    catch (e) {
       print("Error during email/password sign-up: $e");
       return null;
     }
+    return null;
   }
 
-  Future<User?> loginUserWithEmailAndPassword(String email, String password) async {
+  Future<Object?> loginUserWithEmailAndPassword(String email, String password) async {
     try {
       final UserCredential cred = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       return cred.user;
-    } catch (e) {
-      print("Error during email/password sign-in: $e");
-      return null;
+    }on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        return 'Wrong password provided for that user.';
+      }
+      // else{
+      //   // Handle other FirebaseAuthException cases
+      //   return '${e.message}';
+      // }
+      else{
+        return 'Email or Password Invalid';
+      }
+
+
+
     }
+    return null;
+    // catch (e) {
+    //   print("Error during email/password sign-in: ${e.message}");
+    //   return null;
+    // }
   }
 
   Future<void> signOut() async {
@@ -71,5 +97,22 @@ class AuthService {
       print("Error during sign-out: $e");
     }
   }
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+
+      if (e.code == 'auth/user-not-found') {
+        throw Exception('No user found for that email.');
+      } else {
+        throw Exception('An error occurred: ${e.message}');
+      }
+    } catch (e) {
+      // Handle other exceptions
+      throw Exception('An error occurred: $e');
+    }
+  }
+
 
 }
+
