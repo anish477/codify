@@ -13,7 +13,9 @@ class _SignupState extends State<Signup> {
   String email = '';
   String password = '';
   String error = '';
-  bool isLoading = false; // Add a loading state
+  bool isLoading = false;
+  bool passwordVisibility=false;
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -68,13 +70,23 @@ class _SignupState extends State<Signup> {
                 width: 350,
                 height: 60, // Added SizedBox with fixed height
                 child: TextFormField(
-                  obscureText: true,
+                  obscureText: !passwordVisibility,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                     hintText: "Enter your password",
                     labelText: "Password",
+                    suffixIcon:
+                    IconButton( icon:Icon(
+                        passwordVisibility? Icons.visibility:Icons.visibility_off
+                    ), onPressed: () {
+                      setState(() {
+                        passwordVisibility=!passwordVisibility;
+                      });
+                    }, )
+
+
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -97,11 +109,14 @@ class _SignupState extends State<Signup> {
                     }
                     return null;
                   },
+
+
                   onChanged: (value) {
                     setState(() {
                       password = value;
                     });
                   },
+
                 ),
               ),
               const SizedBox(height: 35),

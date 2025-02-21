@@ -1,12 +1,20 @@
+import 'package:codify/pages/lesson_completed_page.dart';
+import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/widget/buildLivesDisplay.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../gamification/leaderboard.dart';
 import '../lesson/question.dart';
 import '../lesson/question_service.dart';
+import '../provider/lesson_provider.dart';
 import '../user/user_mistake.dart';
 import '../user/user_mistake_service.dart';
 import '../services/auth.dart';
 import '../gamification/leaderboard_service.dart';
+import '../gamification/streak_service.dart';
+import '../gamification/lives_service.dart';
+import '../gamification/lives.dart';
 
 class UserLessonContent extends StatefulWidget {
   final String documentId;
@@ -21,17 +29,29 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final UserMistakeService _userMistakeService = UserMistakeService();
   final AuthService _auth = AuthService();
   final LeaderboardService _leaderboardService = LeaderboardService();
+  final StreakService _streakService = StreakService();
+  final LivesService _livesService = LivesService();
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
   bool _isCorrectAnswer = false;
   bool _showFeedback = false;
   bool _isLoading = true;
   int lessonPoints = 0;
+  Lives? _lives;
 
   @override
   void initState() {
     super.initState();
-    _fetchQuestions();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    final user = await _auth.getUID();
+    if (user != null) {
+      await _livesService.init(user);
+      _lives = _livesService.getLives();
+    }
+    await _fetchQuestions();
   }
 
   Future<void> _fetchQuestions() async {
@@ -57,14 +77,13 @@ class _UserLessonContentState extends State<UserLessonContent> {
         _isCorrectAnswer = true;
         _showFeedback = true;
       });
-      lessonPoints += _questions[_currentQuestionIndex].rewards; // Add rewards to lessonPoints
+      lessonPoints += _questions[_currentQuestionIndex].rewards;
       if (_currentQuestionIndex < _questions.length - 1) {
         setState(() {
           _currentQuestionIndex++;
         });
       } else {
-        // Push the points to the leaderboard
-        final user = await _auth.getUID();
+        final String? user = await _auth.getUID();
         if (user != null) {
           await _leaderboardService.addLeaderboardEntry(Leaderboard(
             userId: user,
@@ -72,15 +91,24 @@ class _UserLessonContentState extends State<UserLessonContent> {
             timestamp: DateTime.now(),
             documentId: '',
           ));
+          await _streakService.updateStreak(user);
         }
-        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
       }
     } else {
+      if (_lives != null) {
+        final livesProvider = Provider.of<LivesProvider>(context, listen: false);
+        livesProvider.decreaseLives();
+        _lives = _livesService.getLives();
+        if (livesProvider.lives?.currentLives == 0) {
+          _showNoLivesDialog();
+          return;
+        }
+      }
       setState(() {
         _isCorrectAnswer = false;
         _showFeedback = true;
       });
-      // Push the mistake to the user_mistakes collection
       final user = await _auth.getUID();
       if (user != null) {
         _userMistakeService.createUserMistake(UserMistake(
@@ -113,8 +141,32 @@ class _UserLessonContentState extends State<UserLessonContent> {
     );
   }
 
+  void _showNoLivesDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('No Lives Left'),
+          content: const Text('You have run out of lives. Please wait for them to refill.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lessonProvider = Provider.of<LessonProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Lesson Content'),
@@ -141,12 +193,10 @@ class _UserLessonContentState extends State<UserLessonContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            BuildLivesDisplay(),
             Text(
               _questions[_currentQuestionIndex].title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(

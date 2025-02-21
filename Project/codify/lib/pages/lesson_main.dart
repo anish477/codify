@@ -1,14 +1,15 @@
+import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/provider/streak_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:codify/lesson/category_service.dart';
-import 'package:codify/lesson/topic_service.dart';
-import 'package:codify/lesson/topic.dart';
-import 'package:codify/lesson/lesson_service.dart';
-import 'package:codify/lesson/lesson.dart';
-import '../user/user_lesson_service.dart';
-import '../services/auth.dart';
-import '../user/user_lesson.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import '../widget/categoryWidget.dart';
+import '../widget/showStreak.dart';
 import 'user_lesson_content.dart';
+import '../provider/lesson_provider.dart';
+import 'package:codify/lesson/topic.dart';
+import 'package:codify/lesson/lesson.dart';
+import '../widget/buildLivesDisplay.dart';
 
 class LessonMain extends StatefulWidget {
   const LessonMain({super.key});
@@ -18,132 +19,35 @@ class LessonMain extends StatefulWidget {
 }
 
 class _LessonMainState extends State<LessonMain> {
-  final CategoryService _categoryService = CategoryService();
-  final UserLessonService _userLessonService = UserLessonService();
-  final AuthService _auth = AuthService();
-  final TopicService _topicService = TopicService();
-  final LessonService _lessonService = LessonService();
-
-  List<UserLesson> _userLessons = [];
-  List<Topic> _topics = [];
-  List<Lesson> _lessons = [];
-  bool isLoading = true;
-  bool isPanelOpen = false;
-  String? _selectedCategoryName;
-  String? _userId;
-  String? errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeUserId();
-  }
-
-  Future<void> _initializeUserId() async {
-    _userId = await _auth.getUID();
-    if (_userId != null) {
-      _fetchInitialData();
-    } else {
-      _showError("Failed to get user ID.");
-    }
-  }
-
-  Future<void> _fetchInitialData() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    await Future.wait([
-      _fetchUserLessons(),
-    ]);
-
-    if (_userLessons.isNotEmpty && _userLessons[0].userCategoryName != null) {
-      await _fetchTopics(_userLessons[0].userCategoryName!);
-      if (_topics.isNotEmpty) {
-        await _fetchLessons(_topics[0].documentId);
-      }
-    }
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  Future<void> _fetchUserLessons() async {
-    try {
-      if (_userId == null) return;
-
-      final userLessons = await _userLessonService.getUserLessonByUserId(_userId!);
-      if (mounted) {
-        setState(() {
-          _userLessons = userLessons;
-          _selectedCategoryName = _userLessons.isNotEmpty ? _userLessons[0].userCategoryName : null;
-        });
-      }
-    } catch (e) {
-      _showError("Failed to load user lessons.");
-    }
-  }
-
-  Future<void> _fetchTopics(String userCategoryId) async {
-    try {
-      final topics = await _topicService.getAllTopics();
-      if (mounted) {
-        setState(() {
-          _topics = topics.where((topic) => topic.categoryId == userCategoryId).toList();
-        });
-      }
-    } catch (e) {
-      _showError("Failed to load topics.");
-    }
-  }
-
-  Future<void> _fetchLessons(String topicId) async {
-    try {
-      final lessons = await _lessonService.getLessonsByTopicId(topicId);
-      if (mounted) {
-        setState(() {
-          _lessons = lessons;
-        });
-      }
-    } catch (e) {
-      _showError("Failed to load lessons.");
-    }
-  }
-
-  void _showError(String message) {
-    if (mounted) {
-      setState(() {
-        errorMessage = message;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final double panelHeight = _userLessons.length * 56.0;
-
+    final lessonProvider = Provider.of<LessonProvider>(context);
+    final livesProvider = Provider.of<LivesProvider>(context);
+    final streakProvider=Provider.of<StreakProvider>(context);
+    final double panelHeight = lessonProvider.userLessons.length * 80.0;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Lesson Main",
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+        backgroundColor: const Color(0xFFFFFFFF),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            // Text("${lessonProvider.selectedCategoryName}"),
+            CategoryDisplay(),
+            StreakDisplay(),
+            // Container(
+            //   child: Text("${streakProvider.lives}"),
+            // ),
+            BuildLivesDisplay(),
+          ],
         ),
       ),
-      body: isLoading
+      body: lessonProvider.loading
           ? _buildLoadingUI()
-          : errorMessage != null
-          ? _buildErrorUI()
-          : _userLessons.isEmpty
+          : lessonProvider.error != null
+          ? _buildErrorUI(lessonProvider.error!)
+          : lessonProvider.userLessons.isEmpty
           ? const Center(child: Text("No categories to display"))
-          : _buildLessonContent(panelHeight),
+          : _buildTopicAndLessonList(lessonProvider, livesProvider),
     );
   }
 
@@ -153,125 +57,155 @@ class _LessonMainState extends State<LessonMain> {
         baseColor: Colors.grey[300]!,
         highlightColor: Colors.grey[100]!,
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-                padding: const EdgeInsets.all(16.0),
-                color: Colors.blue,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 20,
-                        color: Colors.grey[300],
-                      ),
-                      const Icon(Icons.arrow_downward, color: Colors.white),
-                    ])),
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFF78E08F),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 20,
+                    color: Colors.grey[300],
+                  ),
+                  const Icon(Icons.arrow_downward, color: Colors.white),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             Expanded(
-                child: ListView.builder(
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Container(
-                          height: 16,
-                          width: 100,
-                          color: Colors.grey[300],
-                        ),
-                        subtitle: Container(
-                          height: 10,
-                          width: 80,
-                          color: Colors.grey[300],
-                        ),
-                      );
-                    }))
+              child: ListView.builder(
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildErrorUI() {
+  Widget _buildErrorUI(String error) {
     return Center(
-      child: Text(
-        errorMessage!,
-        style: const TextStyle(color: Colors.red),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.red,
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Error: $error",
+              style: const TextStyle(color: Colors.red, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLessonContent(double panelHeight) {
-    return Column(
-      children: <Widget>[
-        GestureDetector(
+
+  Widget _buildTopicAndLessonList(LessonProvider lessonProvider, LivesProvider livesProvider) {
+    if (lessonProvider.topics.isEmpty) {
+      return const Center(child: Text("No topics available."));
+    }
+
+    return ListView.builder(
+      itemCount: lessonProvider.topics.length,
+      itemBuilder: (context, index) {
+        final Topic topic = lessonProvider.topics[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ExpansionTile(
+            title: Text(topic.name),
+            onExpansionChanged: (isExpanded) {
+              if (isExpanded) {
+                lessonProvider.selectTopic(topic.documentId);
+              }
+            },
+            children: _buildLessonList(context, lessonProvider, topic, livesProvider),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildLessonList(BuildContext context, LessonProvider lessonProvider, Topic topic, LivesProvider livesProvider) {
+    List<Lesson> lessons = lessonProvider.lessons.where((lesson) => lesson.topicId == topic.documentId).toList();
+
+    if (lessons.isEmpty) {
+      return [const ListTile(title: Text("No lessons available."))];
+    }
+
+    return lessons.map((lesson) {
+      return Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: ListTile(
+          title: Text(lesson.questionName),
           onTap: () {
-            setState(() {
-              isPanelOpen = !isPanelOpen;
-            });
+            if (livesProvider.lives?.currentLives == 0) {
+              _showNoLivesDialog(context);
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserLessonContent(documentId: lesson.documentId),
+                ),
+              );
+            }
           },
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Colors.blue,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _selectedCategoryName ?? 'Select Category',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Icon(isPanelOpen ? Icons.arrow_upward : Icons.arrow_downward),
-              ],
+        ),
+      );
+    }).toList();
+  }
+
+  void _showNoLivesDialog(context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('No Lives Left'),
+          content: const Text('You have run out of lives. Please wait for them to refill.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-          ),
-        ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: isPanelOpen ? panelHeight : 0.0,
-          child: ListView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _userLessons.length,
-            itemBuilder: (context, index) {
-              final category = _userLessons[index];
-              return Container(
-                color: Colors.grey[200],
-                child: ListTile(
-                  title: Text(category.userCategoryName ?? "No"),
-                  onTap: () {
-                    setState(() {
-                      _selectedCategoryName = category.userCategoryName;
-                      isPanelOpen = false;
-                      if (category.userCategoryId != null) {
-                        _fetchTopics(category.userCategoryId!);
-                      }
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _topics.length,
-            itemBuilder: (context, index) {
-              final topic = _topics[index];
-              return ExpansionTile(
-                title: Text(topic.name),
-                onExpansionChanged: (isExpanded) {
-                  if (isExpanded) {
-                    _fetchLessons(topic.documentId);
-                  }
-                },
-                children: _lessons.map((lesson) => ListTile(
-                  title: Text(lesson.questionName),
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => UserLessonContent(documentId: lesson.documentId)));
-                  },
-                )).toList(),
-              );
-            },
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

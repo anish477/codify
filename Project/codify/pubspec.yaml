@@ -42,10 +42,10 @@ dependencies:
   image_picker: ^1.1.2
   provider: ^6.1.2
   shimmer: ^3.0.0
-  flutter_bloc: ^8.0.1
-  equatable: ^2.0.3
 
   http: any
+  intl: ^0.20.2
+  table_calendar: ^3.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

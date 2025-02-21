@@ -17,6 +17,7 @@ class _LoginState extends State<Login> {
   String password = '';
   String error = '';
   bool isLoading = false;
+  bool _passwordVisible = false;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -67,13 +68,23 @@ class _LoginState extends State<Login> {
                 width: 350,
                 height: 60,
                 child: TextFormField(
-                  obscureText: true,
+                  obscureText: !_passwordVisible,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                     hintText: "Enter your password",
                     labelText: "Password",
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _passwordVisible = !_passwordVisible;
+                        });
+                      },
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
