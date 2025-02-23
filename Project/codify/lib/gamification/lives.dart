@@ -15,7 +15,7 @@ class Lives {
     this.refillTime,
   });
 
-  // Method to check if a life can be refilled
+// Method to check if a life can be refilled
   bool canRefill() {
     if (currentLives >= 5) {
       return false; // Already at max lives
@@ -28,7 +28,7 @@ class Lives {
     return difference.inMinutes >= 5; // 5 minutes have passed
   }
 
-  // Method to refill a life
+// Method to refill a life
   void refillLife() {
     if (canRefill()) {
       currentLives++;
@@ -37,7 +37,7 @@ class Lives {
     }
   }
 
-  // Method to consume a life
+// Method to consume a life
   void consumeLife() {
     if (currentLives > 0) {
       currentLives--;
@@ -48,7 +48,7 @@ class Lives {
     }
   }
 
-  // Method to get the time left for the next refill
+// Method to get the time left for the next refill
   Duration? getNextRefillTime() {
     if (currentLives >= 5 || lastRefillTime == null) {
       refillTime = null; // Set refillTime to null when no refill is needed
@@ -60,9 +60,10 @@ class Lives {
     refillTime = difference;
 
     return difference;
+
   }
 
-  // Method to convert Lives to a map for storage
+// Method to convert Lives to a map for storage
   Map<String, dynamic> toMap() {
     return {
       'currentLives': currentLives,
@@ -71,7 +72,7 @@ class Lives {
     };
   }
 
-  // Method to create Lives from a document
+// Method to create Lives from a document
   static Lives fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Lives(

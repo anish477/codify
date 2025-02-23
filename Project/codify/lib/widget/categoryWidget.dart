@@ -39,16 +39,26 @@ class _CategoryDisplayState extends State<CategoryDisplay>
     final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 0;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: appBarHeight,
-        right: 0,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Material(
-            color: Colors.transparent,
-            child: _buildOverlayContent(context),
+      builder: (context) => Stack(
+        children:[
+          Positioned.fill(child: GestureDetector(
+            onTap: (){
+              _hideOverlay();
+            },
+          )),
+
+          Positioned(
+          top: appBarHeight,
+          right: 0,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Material(
+              color: Colors.transparent,
+              child: _buildOverlayContent(context),
+            ),
           ),
         ),
+        ]
       ),
     );
 

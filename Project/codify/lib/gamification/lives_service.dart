@@ -8,7 +8,7 @@ class LivesService {
   FirebaseFirestore.instance.collection('lives');
   Lives? _lives;
   Timer? _refillTimer;
-  // Use a ValueNotifier to update the UI
+
   final ValueNotifier<String> _timeRemainingNotifier = ValueNotifier<String>('');
   ValueNotifier<String> get timeRemainingNotifier => _timeRemainingNotifier;
 

@@ -1,3 +1,4 @@
+import 'package:codify/provider/streak_provider.dart';
 import 'package:codify/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,9 +6,13 @@ import 'package:codify/services/upload_image.dart';
 import 'package:codify/pages/setting.dart';
 import 'package:codify/user/user_service.dart';
 import 'package:codify/services/auth.dart';
+import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import '../user/image.dart';
 import '../user/image_service.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:codify/gamification/leaderboard_service.dart';
+import 'package:intl/intl.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -22,11 +27,13 @@ class _ProfileState extends State<Profile> {
   final UploadImageService _uploadImageService = UploadImageService();
   final AuthService _auth = AuthService();
   final ImageService _imageService = ImageService();
+  final LeaderboardService _leaderboardService = LeaderboardService();
 
   bool _isUploading = false;
   bool _isLoading = false;
-  String? _imageUrl;
   List<ImageModel> images = [];
+  UserDetail? _user;
+  Map<String, int> _userPoints = {};
 
   Future<void> _pickAndUploadImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -40,7 +47,7 @@ class _ProfileState extends State<Profile> {
       if (imageUrl != null) {
         if (!mounted) return;
         await _addImage(imageUrl);
-        await _fetchData(); // Refresh all data after adding image
+        await _fetchData();
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,11 +71,14 @@ class _ProfileState extends State<Profile> {
 
     try {
       await _fetchUserImage();
+      await _fetchUserData();
+      await _fetchUserPoints();
     } catch (e) {
       print("Error fetching user data: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Failed to fetch user data. Please try again later.')));
+            content: Text(
+                'Failed to fetch user data. Please try again later.')));
       }
     } finally {
       if (mounted) {
@@ -86,11 +96,30 @@ class _ProfileState extends State<Profile> {
       if (mounted) {
         setState(() {
           images = fetchedImage;
-          _isLoading = false;
         });
       }
     }
     print("Fetched images: $images");
+  }
+
+  Future<void> _fetchUserData() async {
+    final String? userId = await _auth.getUID();
+    if (userId != null) {
+      final userStream = _userService.getUserStreamByUserId(userId);
+      await for (final users in userStream) {
+        if (users.isNotEmpty) {
+          setState(() {
+            _user = users.first;
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  Future<void> _fetchUserPoints() async {
+    _userPoints = await _leaderboardService.getTotalPointsByUserLast7Days();
+    setState(() {});
   }
 
   @override
@@ -107,13 +136,11 @@ class _ProfileState extends State<Profile> {
         actions: [
           GestureDetector(
             onTap: () async {
-              final result = await Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const Setting()),
               );
-              // if (result == true) {
-              //   _fetchData();
-              // }
+              _fetchData();
             },
             child: const Padding(
               padding: EdgeInsets.all(8),
@@ -122,77 +149,67 @@ class _ProfileState extends State<Profile> {
           ),
         ],
       ),
-      body: FutureBuilder<String?>(
-        future: _auth.getUID(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('No user ID available'));
-          } else {
-            final userId = snapshot.data!;
-            return StreamBuilder<List<UserDetail>>(
-              stream: _userService.getUserStreamByUserId(userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    enabled: true,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const CircleAvatar(radius: 60.0, backgroundColor: Colors.grey),
-                          const SizedBox(height: 10),
-                          Container(height: 20, width: 100, color: Colors.white),
-                          const SizedBox(height: 10),
-                          Container(height: 20, width: 80, color: Colors.white),
-                          const SizedBox(height: 20),
-                          Container(
-                            height: 50,
-                            width: 200,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No user information available'));
-                } else {
-                  final user = snapshot.data!.first;
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          _buildAvatar(),
-                          const SizedBox(height: 20),
-                          _buildUserInfo(user),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: _pickAndUploadImage,
-                            child: const Text("Change Avatar"),
-                          ),
+      body: _isLoading
+          ? _buildLoadingShimmer()
+          : _user != null
+          ? _buildProfileContent(context)
+          : const Center(child: Text('No user data available')),
+    );
+  }
 
-                        ],
-                      ),
-                    ),
-                  );
-                }
-              },
-            );
-          }
-        },
+  Widget _buildLoadingShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      enabled: true,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const CircleAvatar(radius: 60.0, backgroundColor: Colors.grey),
+            const SizedBox(height: 10),
+            Container(height: 20, width: 100, color: Colors.white),
+            const SizedBox(height: 10),
+            Container(height: 20, width: 80, color: Colors.white),
+            const SizedBox(height: 20),
+            Container(
+              height: 50,
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(BuildContext context) {
+    final streak = Provider.of<StreakProvider>(context).streak;
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _buildAvatar(),
+              const SizedBox(height: 20),
+              _buildUserInfo(_user!),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _pickAndUploadImage,
+                child: const Text("Change Avatar"),
+              ),
+              const SizedBox(height: 20),
+              Text("${streak?.currentStreak} Days"),
+              const SizedBox(height: 20),
+              _buildTrendGraph(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -218,11 +235,14 @@ class _ProfileState extends State<Profile> {
           backgroundColor: Colors.grey,
           child: ClipOval(
             child: Image.network(
-              images.isNotEmpty ? images.first.image : "https://cdn-icons-png.flaticon.com/512/3177/3177283.png",
+              images.isNotEmpty
+                  ? images.first.image
+                  : "https://cdn-icons-png.flaticon.com/512/3177/3177283.png",
               fit: BoxFit.cover,
               width: 120.0,
               height: 120.0,
-              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent? loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Shimmer.fromColors(
                   baseColor: Colors.grey[300]!,
@@ -234,8 +254,9 @@ class _ProfileState extends State<Profile> {
                   ),
                 );
               },
-              errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                return Icon(
+              errorBuilder: (BuildContext context, Object error,
+                  StackTrace? stackTrace) {
+                return const Icon(
                   Icons.error,
                   color: Colors.red,
                   size: 120.0,
@@ -263,4 +284,43 @@ class _ProfileState extends State<Profile> {
       ],
     );
   }
+
+  Widget _buildTrendGraph() {
+    return SfCartesianChart(
+      primaryXAxis: DateTimeAxis(
+        dateFormat: DateFormat.MMMd(),
+        intervalType: DateTimeIntervalType.days,
+        interval: 1,
+      ),
+      primaryYAxis: NumericAxis(
+        title: AxisTitle(text: 'XP'),
+      ),
+      series: <CartesianSeries>[
+        ColumnSeries<ChartData, DateTime>(
+          dataSource: _prepareChartData(),
+          xValueMapper: (ChartData data, _) => data.date,
+          yValueMapper: (ChartData data, _) => data.points,
+        )
+      ],
+    );
+  }
+
+  List<ChartData> _prepareChartData() {
+    List<ChartData> chartData = [];
+    DateTime now = DateTime.now();
+    for (int i = 0; i < 7; i++) {
+      DateTime date = now.subtract(Duration(days: i));
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date);
+      int points = _userPoints[formattedDate] ?? 0;
+      print(_userPoints);
+      chartData.add(ChartData(date, points));
+    }
+    return chartData;
+  }
+}
+
+class ChartData {
+  ChartData(this.date, this.points);
+  final DateTime date;
+  final int points;
 }

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart'; // Import the intl package for date formatting
+import 'package:intl/intl.dart';
 import 'streak.dart';
 
 class StreakService {
@@ -42,9 +42,11 @@ class StreakService {
   Future<void> updateStreak(String userId) async {
     final currentDate = _getCurrentDate();
     final streak = await getStreakForUser(userId);
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
 
     if (streak == null) {
-      // No existing streak, create a new one
+
       final newStreak = Streak(
         id: '',
         userId: userId,
@@ -55,37 +57,39 @@ class StreakService {
       );
       await addStreak(newStreak);
     } else {
-      // Streak exists, check if it needs to be updated or reset
-      if (streak.lastUpdated == currentDate) {
-        // User already updated the streak today, do nothing
-        print('User already updated the streak today');
+      // Check if streak was already updated today
+      final lastUpdatedDate = DateTime.parse(streak.lastUpdated);
+      final lastUpdatedDay = DateTime(lastUpdatedDate.year, lastUpdatedDate.month, lastUpdatedDate.day);
+
+      if (lastUpdatedDay.isAtSameMomentAs(startOfToday)) {
+        // Already updated today, do nothing
+        print('Streak already updated today');
         return;
       }
 
-      final lastUpdatedDate = DateTime.parse(streak.lastUpdated);
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final yesterday = startOfToday.subtract(const Duration(days: 1));
+      final lastUpdatedIsYesterday = lastUpdatedDay.isAtSameMomentAs(yesterday);
 
-      if (lastUpdatedDate.isBefore(yesterday)) {
-        // Streak broken, reset to 1
-        print('Streak broken, resetting to 1');
-        await _updateStreakDocument(streak.id, 1, currentDate, streak.longestStreak, [DateTime.now()]);
+      if (!lastUpdatedIsYesterday && lastUpdatedDay.isBefore(yesterday)) {
+        // Streak broken, reset to 0
+        print('Streak broken, resetting to 0');
+        await _updateStreakDocument(streak.id, 0, DateTime.now(), streak.longestStreak, [DateTime.now()]);
       } else {
         // Streak continues, increment
         print('Streak continues, incrementing');
         final newStreakCount = streak.currentStreak + 1;
-        final newLongestStreak =
-        newStreakCount > streak.longestStreak ? newStreakCount : streak.longestStreak;
+        final newLongestStreak = newStreakCount > streak.longestStreak ? newStreakCount : streak.longestStreak;
         final newDates = List<DateTime>.from(streak.dates)..add(DateTime.now());
-        await _updateStreakDocument(streak.id, newStreakCount, currentDate, newLongestStreak, newDates);
+        await _updateStreakDocument(streak.id, newStreakCount, DateTime.now(), newLongestStreak, newDates);
       }
     }
   }
 
-  Future<void> _updateStreakDocument(String docId, int currentStreak, String lastUpdated, int longestStreak, List<DateTime> dates) async {
+  Future<void> _updateStreakDocument(String docId, int currentStreak, DateTime lastUpdated, int longestStreak, List<DateTime> dates) async {
     try {
       await _streakCollection.doc(docId).update({
         'currentStreak': currentStreak,
-        'lastUpdated': lastUpdated,
+        'lastUpdated': lastUpdated.toIso8601String(),
         'longestStreak': longestStreak,
         'dates': dates.map((date) => date.toIso8601String()).toList(),
       });

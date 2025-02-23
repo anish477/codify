@@ -23,20 +23,16 @@ class _LessonMainState extends State<LessonMain> {
   Widget build(BuildContext context) {
     final lessonProvider = Provider.of<LessonProvider>(context);
     final livesProvider = Provider.of<LivesProvider>(context);
-    final streakProvider=Provider.of<StreakProvider>(context);
-    final double panelHeight = lessonProvider.userLessons.length * 80.0;
+    final streakProvider = Provider.of<StreakProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Text("${lessonProvider.selectedCategoryName}"),
             CategoryDisplay(),
             StreakDisplay(),
-            // Container(
-            //   child: Text("${streakProvider.lives}"),
-            // ),
             BuildLivesDisplay(),
           ],
         ),
@@ -125,7 +121,6 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-
   Widget _buildTopicAndLessonList(LessonProvider lessonProvider, LivesProvider livesProvider) {
     if (lessonProvider.topics.isEmpty) {
       return const Center(child: Text("No topics available."));
@@ -135,57 +130,121 @@ class _LessonMainState extends State<LessonMain> {
       itemCount: lessonProvider.topics.length,
       itemBuilder: (context, index) {
         final Topic topic = lessonProvider.topics[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ExpansionTile(
-            title: Text(topic.name),
-            onExpansionChanged: (isExpanded) {
-              if (isExpanded) {
-                lessonProvider.selectTopic(topic.documentId);
-              }
-            },
-            children: _buildLessonList(context, lessonProvider, topic, livesProvider),
+        return Container(
+          width: 400,
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Topic Container
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Container(
+                    padding: EdgeInsets.all(12),
+                    color: Color(0xFFFDB813),
+                    width: constraints.maxWidth * 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(topic.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text('Introduction', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              //Lesson Content
+              _buildLessonList(context, lessonProvider, topic, livesProvider),
+            ],
           ),
         );
       },
     );
   }
 
-  List<Widget> _buildLessonList(BuildContext context, LessonProvider lessonProvider, Topic topic, LivesProvider livesProvider) {
+  Widget _buildLessonList(BuildContext context, LessonProvider lessonProvider, Topic topic, LivesProvider livesProvider) {
     List<Lesson> lessons = lessonProvider.lessons.where((lesson) => lesson.topicId == topic.documentId).toList();
+    List<Widget> lessonWidgets = [];
 
-    if (lessons.isEmpty) {
-      return [const ListTile(title: Text("No lessons available."))];
-    }
+    for (int i = 0; i < lessons.length; i++) {
+      Lesson lesson = lessons[i];
+      bool isLastLesson = i == lessons.length - 1;
 
-    return lessons.map((lesson) {
-      return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: ListTile(
-          title: Text(lesson.questionName),
-          onTap: () {
-            if (livesProvider.lives?.currentLives == 0) {
-              _showNoLivesDialog(context);
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => UserLessonContent(documentId: lesson.documentId),
-                ),
-              );
-            }
-          },
+      lessonWidgets.add(
+        Row(
+          children: [
+            _circleIcon(Icons.play_circle_fill, Colors.orange, onTap: () {
+              if (livesProvider.lives?.currentLives == 0) {
+                _showNoLivesDialog(context);
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserLessonContent(documentId: lesson.documentId),
+                  ),
+                );
+              }
+            }),
+            Expanded(child: dividerLine()),
+            _circleIcon(Icons.lock, Colors.grey[300]!),
+          ],
         ),
       );
-    }).toList();
+
+      if (!isLastLesson) {
+        lessonWidgets.add(
+          SizedBox(height: 32),
+        );
+        lessonWidgets.add(
+          Row(
+            children: [
+              SizedBox(width: 36),
+              _verticalLine(),
+            ],
+          ),
+        );
+      }
+    }
+
+    return Column(
+      children: lessonWidgets,
+    );
+  }
+
+  // Circle Icon Widget
+  Widget _circleIcon(IconData icon, Color bgColor, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: bgColor,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 28),
+      ),
+    );
+  }
+
+  // Divider Line
+  Widget dividerLine() {
+    return Container(
+      height: 2,
+      color: Colors.grey[400],
+      margin: EdgeInsets.symmetric(horizontal: 8),
+    );
+  }
+
+  // Vertical Line
+  Widget _verticalLine() {
+    return Container(
+      width: 2,
+      height: 32,
+      color: Colors.grey[400],
+      margin: EdgeInsets.only(right: 8),
+    );
   }
 
   void _showNoLivesDialog(context) {

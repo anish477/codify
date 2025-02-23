@@ -1,6 +1,5 @@
 import 'package:codify/pages/lesson_completed_page.dart';
 import 'package:codify/provider/lives_provider.dart';
-import 'package:codify/widget/buildLivesDisplay.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -8,6 +7,7 @@ import '../gamification/leaderboard.dart';
 import '../lesson/question.dart';
 import '../lesson/question_service.dart';
 import '../provider/lesson_provider.dart';
+import '../provider/streak_provider.dart';
 import '../user/user_mistake.dart';
 import '../user/user_mistake_service.dart';
 import '../services/auth.dart';
@@ -18,7 +18,8 @@ import '../gamification/lives.dart';
 
 class UserLessonContent extends StatefulWidget {
   final String documentId;
-  const UserLessonContent({super.key, required this.documentId});
+
+  const UserLessonContent({Key? key, required this.documentId}) : super(key: key);
 
   @override
   State<UserLessonContent> createState() => _UserLessonContentState();
@@ -31,6 +32,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final LeaderboardService _leaderboardService = LeaderboardService();
   final StreakService _streakService = StreakService();
   final LivesService _livesService = LivesService();
+
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
   bool _isCorrectAnswer = false;
@@ -76,8 +78,9 @@ class _UserLessonContentState extends State<UserLessonContent> {
       setState(() {
         _isCorrectAnswer = true;
         _showFeedback = true;
+        lessonPoints += _questions[_currentQuestionIndex].rewards;
       });
-      lessonPoints += _questions[_currentQuestionIndex].rewards;
+
       if (_currentQuestionIndex < _questions.length - 1) {
         setState(() {
           _currentQuestionIndex++;
@@ -91,7 +94,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
             timestamp: DateTime.now(),
             documentId: '',
           ));
-          await _streakService.updateStreak(user);
+
+          await Provider.of<StreakProvider>(context, listen: false).updateStreak();
         }
         Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
       }
@@ -101,7 +105,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
         livesProvider.decreaseLives();
         _lives = _livesService.getLives();
         if (livesProvider.lives?.currentLives == 0) {
-          _showNoLivesDialog();
+          Future.delayed(Duration(milliseconds: 300), _showNoLivesDialog);
           return;
         }
       }
@@ -165,12 +169,39 @@ class _UserLessonContentState extends State<UserLessonContent> {
 
   @override
   Widget build(BuildContext context) {
-    final lessonProvider = Provider.of<LessonProvider>(context);
+    final livesProvider = Provider.of<LivesProvider>(context);
+    double progress = _questions.isNotEmpty ? (_currentQuestionIndex + 1) / _questions.length : 0.0;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Lesson Content'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: LinearProgressIndicator(
+                value: progress,
+                borderRadius: BorderRadius.circular(10),
+                backgroundColor: Colors.grey[300],
+                minHeight: 15,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+              ),
+            ),
+            const SizedBox(width: 19),
+            Row(
+              children: [
+                Text(
+                  '${livesProvider.lives?.currentLives ?? 0}',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 5),
+                const Icon(Icons.favorite, color: Colors.red),
+                SizedBox(width: 8,)
+              ],
+            ),
+          ],
+        ),
       ),
+      backgroundColor: Colors.grey[100],
       body: _isLoading
           ? Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
@@ -191,37 +222,82 @@ class _UserLessonContentState extends State<UserLessonContent> {
           : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            BuildLivesDisplay(),
-            Text(
-              _questions[_currentQuestionIndex].title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _questions[_currentQuestionIndex].title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _questions[_currentQuestionIndex].content,
+                      style: const TextStyle(fontSize: 18, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Question:',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _questions[_currentQuestionIndex].questionText,
+                      style: const TextStyle(fontSize: 18, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _questions[_currentQuestionIndex].content,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Question: ${_questions[_currentQuestionIndex].questionText}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Options:',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
             ),
-            ..._questions[_currentQuestionIndex].options.asMap().entries.map((entry) {
-              int idx = entry.key;
-              String option = entry.value;
-              return ListTile(
-                title: Text(option),
-                onTap: () => _checkAnswer(idx),
-              );
-            }),
             const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _questions[_currentQuestionIndex].options.length,
+                itemBuilder: (context, index) {
+                  final option = _questions[_currentQuestionIndex].options[index];
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ListTile(
+                      title: Text(option, style: const TextStyle(fontSize: 16)),
+                      onTap: () => _checkAnswer(index),
+                      tileColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

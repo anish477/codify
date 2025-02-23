@@ -1,0 +1,2 @@
+C:/Users/anish/Desktop/codify/Project/codify/android/app/.cxx/RelWithDebInfo/3l2pxp43/x86/CMakeFiles/edit_cache.dir
+C:/Users/anish/Desktop/codify/Project/codify/android/app/.cxx/RelWithDebInfo/3l2pxp43/x86/CMakeFiles/rebuild_cache.dir
