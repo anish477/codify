@@ -7,9 +7,12 @@ import '../widget/categoryWidget.dart';
 import '../widget/showStreak.dart';
 import 'user_lesson_content.dart';
 import '../provider/lesson_provider.dart';
+import '../provider/user_stat_provider.dart';
 import 'package:codify/lesson/topic.dart';
 import 'package:codify/lesson/lesson.dart';
 import '../widget/buildLivesDisplay.dart';
+import '../services/auth.dart';
+import 'package:intl/intl.dart';
 
 class LessonMain extends StatefulWidget {
   const LessonMain({super.key});
@@ -24,6 +27,7 @@ class _LessonMainState extends State<LessonMain> {
     final lessonProvider = Provider.of<LessonProvider>(context);
     final livesProvider = Provider.of<LivesProvider>(context);
     final streakProvider = Provider.of<StreakProvider>(context);
+    final userStatProvider = Provider.of<UserStatProvider>(context); // Get UserStatProvider here
 
     return Scaffold(
       appBar: AppBar(
@@ -37,13 +41,14 @@ class _LessonMainState extends State<LessonMain> {
           ],
         ),
       ),
+      backgroundColor: Color(0xFFFFFFFF),
       body: lessonProvider.loading
           ? _buildLoadingUI()
           : lessonProvider.error != null
           ? _buildErrorUI(lessonProvider.error!)
           : lessonProvider.userLessons.isEmpty
           ? const Center(child: Text("No categories to display"))
-          : _buildTopicAndLessonList(lessonProvider, livesProvider),
+          : _buildTopicAndLessonList(lessonProvider, livesProvider, userStatProvider), // Pass userStatProvider
     );
   }
 
@@ -121,7 +126,7 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildTopicAndLessonList(LessonProvider lessonProvider, LivesProvider livesProvider) {
+  Widget _buildTopicAndLessonList(LessonProvider lessonProvider, LivesProvider livesProvider, UserStatProvider userStatProvider) { // Receive userStatProvider
     if (lessonProvider.topics.isEmpty) {
       return const Center(child: Text("No topics available."));
     }
@@ -155,7 +160,7 @@ class _LessonMainState extends State<LessonMain> {
               ),
               SizedBox(height: 16),
               //Lesson Content
-              _buildLessonList(context, lessonProvider, topic, livesProvider),
+              _buildLessonList(context, lessonProvider, topic, livesProvider, userStatProvider), // Pass userStatProvider
             ],
           ),
         );
@@ -163,31 +168,69 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildLessonList(BuildContext context, LessonProvider lessonProvider, Topic topic, LivesProvider livesProvider) {
+  Widget _buildLessonList(BuildContext context, LessonProvider lessonProvider, Topic topic, LivesProvider livesProvider, UserStatProvider userStatProvider) { // Receive userStatProvider
     List<Lesson> lessons = lessonProvider.lessons.where((lesson) => lesson.topicId == topic.documentId).toList();
+
+    // lessons.sort((a, b) {
+    //   if (a.createdAt == null && b.createdAt == null) return 0;
+    //   if (a.createdAt == null) return 1;
+    //   if (b.createdAt == null) return -1;
+    //   return a.createdAt!.compareTo(b.createdAt!);
+    // });
+
     List<Widget> lessonWidgets = [];
 
     for (int i = 0; i < lessons.length; i++) {
       Lesson lesson = lessons[i];
       bool isLastLesson = i == lessons.length - 1;
+      bool isLessonUnlocked = true;  // Assume lesson is unlocked by default
+
+      //
+      if (i > 0) {
+        Lesson previousLesson = lessons[i - 1];
+        if (!userStatProvider.questionIds.contains(previousLesson.documentId)) {
+          isLessonUnlocked = false;
+        }
+      }
 
       lessonWidgets.add(
-        Row(
+        Column(
           children: [
-            _circleIcon(Icons.play_circle_fill, Colors.orange, onTap: () {
-              if (livesProvider.lives?.currentLives == 0) {
-                _showNoLivesDialog(context);
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UserLessonContent(documentId: lesson.documentId),
-                  ),
-                );
-              }
-            }),
-            Expanded(child: dividerLine()),
-            _circleIcon(Icons.lock, Colors.grey[300]!),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                _circleIcon(
+                  Icons.play_circle_fill,
+                  isLessonUnlocked ? Colors.orange : Colors.grey,  // Change color based on lock status
+                  onTap: isLessonUnlocked
+                      ? () async {
+                    final userId = await AuthService().getUID();
+
+                    if (userStatProvider.questionIds.contains(lesson.documentId)) {
+                      if (livesProvider.lives?.currentLives == 0) {
+                        _showNoLivesDialog(context);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UserLessonContent(documentId: lesson.documentId),
+                          ),
+                        );
+                      }
+                    } else {
+                      _showLockedLessonDialog(context);
+                    }
+                  }
+                      : null, // Disable onTap if locked
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              lesson.questionName,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isLessonUnlocked ? Colors.black : Colors.grey), // Grey out the text
+            ),
           ],
         ),
       );
@@ -200,7 +243,7 @@ class _LessonMainState extends State<LessonMain> {
           Row(
             children: [
               SizedBox(width: 36),
-              _verticalLine(),
+              _verticalLine(isLessonUnlocked),  // Change line color based on current lesson status
             ],
           ),
         );
@@ -228,21 +271,12 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  // Divider Line
-  Widget dividerLine() {
-    return Container(
-      height: 2,
-      color: Colors.grey[400],
-      margin: EdgeInsets.symmetric(horizontal: 8),
-    );
-  }
-
   // Vertical Line
-  Widget _verticalLine() {
+  Widget _verticalLine(bool isUnlocked) {  // Added parameter
     return Container(
       width: 2,
       height: 32,
-      color: Colors.grey[400],
+      color: isUnlocked ? Colors.grey[400] : Colors.grey[700],  // Change color based on status
       margin: EdgeInsets.only(right: 8),
     );
   }
@@ -255,6 +289,27 @@ class _LessonMainState extends State<LessonMain> {
         return AlertDialog(
           title: const Text('No Lives Left'),
           content: const Text('You have run out of lives. Please wait for them to refill.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLockedLessonDialog(context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Lesson Locked'),
+          content: const Text('You need to complete the previous lessons to unlock this one.'),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),

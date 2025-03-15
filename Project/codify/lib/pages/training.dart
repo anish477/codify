@@ -55,6 +55,7 @@ class _TrainingState extends State<Training> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
+      backgroundColor: Color(0xFFFFFFFF),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

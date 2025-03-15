@@ -56,12 +56,13 @@ class _TrainingMistakeState extends State<TrainingMistake> {
 
   Future<void> _checkAnswer(int selectedOption, Question question) async {
     bool isCorrectAnswer = question.correctOption == selectedOption;
+
     if (isCorrectAnswer) {
       setState(() {
-        if (_currentMistakeIndex < _mistakes.length - 1) {
-          _currentMistakeIndex++;
-        } else {
-          Navigator.pop(context);
+        _userMistakeService.deleteUserMistake(question.documentId);
+        _mistakes.removeAt(_currentMistakeIndex);
+        if (_currentMistakeIndex >= _mistakes.length) {
+          _currentMistakeIndex = 0;
         }
       });
     } else {
@@ -107,7 +108,10 @@ class _TrainingMistakeState extends State<TrainingMistake> {
           ? Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
         highlightColor: Colors.grey[100]!,
-        child: Text(''),
+        child: Container(
+          height: 100.0,
+          color: Colors.white,
+        ),
       )
           : _mistakes.isEmpty
           ? const Center(child: Text('No mistakes found'))

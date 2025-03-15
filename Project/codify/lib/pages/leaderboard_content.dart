@@ -88,8 +88,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Color(0xFFFFFFFF),
         title: const Text("Leaderboard"),
       ),
+      backgroundColor: Color(0xFFFFFFFF),
       body: _isLoading
           ? Center(
         child: Shimmer.fromColors(

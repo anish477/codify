@@ -1,18 +1,19 @@
+
+import 'package:codify/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/user/user_service.dart';
 import 'package:codify/services/auth.dart';
-import 'package:codify/user/user.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-import "../pages/home.dart";
 
-class RedirectAddProfile extends StatefulWidget {
-  const RedirectAddProfile({super.key});
-
+import '../provider/profile_provider.dart';
+class RedirectProfile extends StatefulWidget {
+  const RedirectProfile({super.key});
   @override
-  State<RedirectAddProfile> createState() => _AddProfileState();
+  State<RedirectProfile> createState() => _ProfileState();
 }
 
-class _AddProfileState extends State<RedirectAddProfile> {
+class _ProfileState extends State<RedirectProfile> {
   final _formKey = GlobalKey<FormState>();
   final _nameTextController = TextEditingController();
   final _ageTextController = TextEditingController();
@@ -43,7 +44,7 @@ class _AddProfileState extends State<RedirectAddProfile> {
       appBar: AppBar(
         backgroundColor: Color(0xFFFFFFFF),
         title: Text(
-          _isEditing ? "Edit Profile" : "Add Profile Redirect",
+          _isEditing ? "Edit Profile" : "Add Profile",
           style: TextStyle(color: Colors.black),
         ),
         iconTheme: IconThemeData(color: Colors.black),
@@ -80,17 +81,7 @@ class _AddProfileState extends State<RedirectAddProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  _isLoading
-                      ? Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      height: 56,
-                      width: double.infinity,
-                      color: Colors.white,
-                    ),
-                  )
-                      : TextFormField(
+                  TextFormField(
                     controller: _ageTextController,
                     decoration: const InputDecoration(
                       labelText: "Age",
@@ -157,8 +148,6 @@ class _AddProfileState extends State<RedirectAddProfile> {
       name: _nameTextController.text,
       age: int.parse(_ageTextController.text),
       userId: userId,
-      hasBeenRedirected: false, // Set to false
-      profileComplete: false, // Set to false
     );
 
     try {
@@ -169,9 +158,7 @@ class _AddProfileState extends State<RedirectAddProfile> {
       }
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => Home()),
-        );
+         // Provider.of<ProfileProvider>(context, listen:false).setHasRedirected();
       }
     } catch (e) {
       print("Error saving user data: $e");
@@ -188,6 +175,7 @@ class _AddProfileState extends State<RedirectAddProfile> {
       }
     }
   }
+
   Future<void> _fetchUserData() async {
     setState(() {
       _isLoading = true;
@@ -211,6 +199,9 @@ class _AddProfileState extends State<RedirectAddProfile> {
           });
         }
       }
+
+
+
     } catch (e) {
       print("Error fetching user data: $e");
       if (mounted) {

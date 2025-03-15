@@ -23,4 +23,12 @@ class ImageService {
     }
   }
 
+  Future<void> updateImage(String documentId, Map<String, dynamic> data) async {
+    try {
+      await _userCollection.doc(documentId).update(data);
+    } catch (e) {
+      print("Error updating image: $e");
+    }
+  }
+
 }

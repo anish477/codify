@@ -1,12 +1,12 @@
 import 'package:codify/pages/lesson_completed_page.dart';
 import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/provider/user_stat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../gamification/leaderboard.dart';
 import '../lesson/question.dart';
 import '../lesson/question_service.dart';
-import '../provider/lesson_provider.dart';
 import '../provider/streak_provider.dart';
 import '../user/user_mistake.dart';
 import '../user/user_mistake_service.dart';
@@ -19,7 +19,7 @@ import '../gamification/lives.dart';
 class UserLessonContent extends StatefulWidget {
   final String documentId;
 
-  const UserLessonContent({Key? key, required this.documentId}) : super(key: key);
+  const UserLessonContent({super.key, required this.documentId});
 
   @override
   State<UserLessonContent> createState() => _UserLessonContentState();
@@ -97,6 +97,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
 
           await Provider.of<StreakProvider>(context, listen: false).updateStreak();
         }
+
+        Provider.of<UserStatProvider>(context,listen: false).markQuestionAsComplete(user!, widget.documentId,widget.documentId);
         Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
       }
     } else {
@@ -201,7 +203,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
           ],
         ),
       ),
-      backgroundColor: Colors.grey[100],
+
+      backgroundColor: Color(0xFFFFFFFF),
       body: _isLoading
           ? Shimmer.fromColors(
         baseColor: Colors.grey[300]!,

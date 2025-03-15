@@ -5,7 +5,7 @@ class UserDetail {
   final String name;
   final int age;
   final String? userId;
-  final bool hasBeenRedirected;
+  late final bool hasBeenRedirected;
   final bool profileComplete;
 
   UserDetail({

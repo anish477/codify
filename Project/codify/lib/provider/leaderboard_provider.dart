@@ -9,19 +9,26 @@ class LeaderboardProvider extends ChangeNotifier {
 
   List<Leaderboard> _leaderboardEntries = [];
   Map<String, int> _userPoints = {};
+  Map<String, int> _userPointsForGraph = {};
+  String? _userId;
 
   List<Leaderboard> get leaderboardEntries => _leaderboardEntries;
   Map<String, int> get userPoints => _userPoints;
+  Map<String, int> get userPointsForGraph => _userPointsForGraph;
 
   LeaderboardProvider() {
     _initializeLeaderboard();
   }
 
   Future<void> _initializeLeaderboard() async {
-    final user = await _authService.getUID();
-    if (user != null) {
-      await _fetchLeaderboardEntries(user);
-      await _fetchUserPoints();
+    _userId = await _authService.getUID();
+
+    if (_userId != null) {
+      await Future.wait([
+        _fetchLeaderboardEntries(_userId!),
+        _fetchUserPoints(),
+        getTotalPointsByUserPerDayLast7Days(),
+      ]);
     }
   }
 
@@ -37,14 +44,39 @@ class LeaderboardProvider extends ChangeNotifier {
 
   Future<void> addLeaderboardEntry(Leaderboard leaderboard) async {
     await _leaderboardService.addLeaderboardEntry(leaderboard);
-    await _fetchLeaderboardEntries(leaderboard.userId);
+    if (_userId != null) {
+      await _fetchLeaderboardEntries(_userId!);
+    } else {
+      _userId = await _authService.getUID();
+      if(_userId != null){
+      }
+    }
+
+  }
+
+  Future<void> getTotalPointsByUserPerDayLast7Days() async {
+    if (_userId != null) {
+      _userPointsForGraph = await _leaderboardService.getTotalPointsByUserPerDayLast7Days(_userId!);
+      notifyListeners();
+    }else{
+      _userId = await _authService.getUID();
+      if(_userId != null){
+        _userPointsForGraph = await _leaderboardService.getTotalPointsByUserPerDayLast7Days(_userId!);
+        notifyListeners();
+      }
+    }
+
   }
 
   Future<void> refreshLeaderboard() async {
-    final user = await _authService.getUID();
-    if (user != null) {
-      await _fetchLeaderboardEntries(user);
-      await _fetchUserPoints();
+    if (_userId != null) {
+      await Future.wait([
+        _fetchLeaderboardEntries(_userId!),
+        _fetchUserPoints(),
+        getTotalPointsByUserPerDayLast7Days(),
+      ]);
+    } else {
+      _initializeLeaderboard();
     }
   }
 }

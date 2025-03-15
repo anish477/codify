@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'leaderboard.dart';
 
 class LeaderboardService {
@@ -47,6 +48,32 @@ class LeaderboardService {
     }
     return userPoints;
   }
+  Future<Map<String, int>> getTotalPointsByUserPerDayLast7Days(String userId) async {
+    DateTime now = DateTime.now();
+    Map<String, int> dailyPoints = {};
 
+    for (int i = 0; i < 7; i++) {
+      DateTime dayStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+      DateTime dayEnd = dayStart.add(Duration(days: 1));
+
+      QuerySnapshot snapshot = await _firestore
+          .collection('leaderboard')
+          .where('userId', isEqualTo: userId)
+          .where('timestamp', isGreaterThanOrEqualTo: dayStart)
+          .where('timestamp', isLessThan: dayEnd)
+          .get();
+
+      int totalPoints = 0;
+      for (var doc in snapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        if (data.containsKey('points')) {
+          totalPoints += data['points'] as int;
+        }
+      }
+      dailyPoints[DateFormat('yyyy-MM-dd').format(dayStart)] = totalPoints;
+    }
+
+    return dailyPoints;
+  }
 
 }

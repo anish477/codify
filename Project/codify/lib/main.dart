@@ -1,6 +1,9 @@
+import 'package:codify/provider/leaderboard_provider.dart';
 import 'package:codify/provider/lesson_provider.dart';
 import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/provider/profile_provider.dart';
 import 'package:codify/provider/streak_provider.dart';
+import 'package:codify/provider/user_stat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -17,14 +20,9 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
 
@@ -34,6 +32,9 @@ class _MyAppState extends State<MyApp> {
       ),
       ChangeNotifierProvider(create: (context)=>LivesProvider()),
       ChangeNotifierProvider(create: (context)=>StreakProvider()),
+      ChangeNotifierProvider(create: (context)=>ProfileProvider(),),
+      ChangeNotifierProvider(create: (context)=>LeaderboardProvider()),
+      ChangeNotifierProvider(create: (context)=>UserStatProvider())
 
 
     ],

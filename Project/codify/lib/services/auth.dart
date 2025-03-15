@@ -91,10 +91,10 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      await _auth.signOut();
-
+      await FirebaseAuth.instance.signOut();
+      print("User signed out successfully!");
     } catch (e) {
-      print("Error during sign-out: $e");
+      print("Error signing out: $e");
     }
   }
   Future<String> sendPasswordResetEmail(String email) async {

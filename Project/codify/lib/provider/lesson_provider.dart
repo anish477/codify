@@ -27,6 +27,8 @@ class LessonProvider extends ChangeNotifier {
   String? errorMessage;
   String? _selectedTopicId;
   String? _selectedCategoryId;
+  String? _userCategoryName;
+  String? _questionId;
 
   List<UserLesson> get userLessons => _userLessons;
   List<Topic> get topics => _topics;
@@ -38,6 +40,7 @@ class LessonProvider extends ChangeNotifier {
   String? get userId => _userId;
   String? get error => errorMessage;
   String? get selectedTopicId => _selectedTopicId;
+  String? get userCategoryName => _userCategoryName;
   String? get selectedCategoryId => _selectedCategoryId;
   static const String _selectedLessonKey = 'selectedLessonId';
   static const String _selectedCategoryKey = 'selectedCategoryId';
@@ -104,6 +107,7 @@ class LessonProvider extends ChangeNotifier {
           await _fetchTopics(_selectedCategoryId!);
 
           print('Loaded persisted category: $_selectedCategoryName with ID: $_selectedCategoryId');
+
         } catch (e) {
           _showError("Failed to find a category with the persisted ID: $_selectedCategoryId.");
         }
@@ -235,5 +239,10 @@ class LessonProvider extends ChangeNotifier {
   Future<void> _savePersistedCategory(String categoryId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedCategoryKey, categoryId);
+  }
+  void reset() {
+
+    _lessons = [];
+    notifyListeners();
   }
 }

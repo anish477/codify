@@ -26,6 +26,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFFFFFF),
         bottomNavigationBar: NavigationBar(onDestinationSelected: (int index){
           setState(() {
             currentPageIndex=index;
@@ -33,6 +34,7 @@ class _HomeState extends State<Home> {
         },
         indicatorColor: Colors.amber,
         selectedIndex: currentPageIndex,
+          backgroundColor: Color(0xFFFFFFFF),
         destinations: const [
           NavigationDestination(selectedIcon: Icon(LucideIcons.home,),icon:  Icon(LucideIcons.home,color: Colors.amber) , label: 'Home'),
           NavigationDestination(selectedIcon: Icon(LucideIcons.dumbbell),icon:  Icon(LucideIcons.dumbbell,color: Colors.blue,) , label: 'Traning'),

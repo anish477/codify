@@ -51,6 +51,21 @@ class UserService {
       throw Exception("Error updating user: $e");
     }
   }
+  Future<void> setHasRedirected(String userId) async {
+    try {
+      final querySnapshot = await _userCollection.where('userId', isEqualTo: userId).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final docId = querySnapshot.docs.first.id;
+        await _userCollection.doc(docId).update({'hasRedirected': true});
+      } else {
+        throw Exception("User not found with userId: $userId");
+      }
+    } catch (e) {
+      print("Error updating hasRedirected: $e");
+      throw Exception("Error updating hasRedirected: $e");
+    }
+  }
 
 
 
