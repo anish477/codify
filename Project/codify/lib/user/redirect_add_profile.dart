@@ -3,10 +3,8 @@ import 'package:codify/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/user/user_service.dart';
 import 'package:codify/services/auth.dart';
-import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../provider/profile_provider.dart';
 class RedirectProfile extends StatefulWidget {
   const RedirectProfile({super.key});
   @override

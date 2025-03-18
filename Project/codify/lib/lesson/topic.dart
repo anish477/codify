@@ -5,12 +5,14 @@ class Topic {
   final String name;
   final String categoryId;
   final List<String> lessonIds;
+  bool isExpanded;
 
   Topic({
     required this.documentId,
     required this.name,
     required this.categoryId,
     required this.lessonIds,
+    this.isExpanded = false,
   });
 
   factory Topic.fromDocument(DocumentSnapshot doc) {

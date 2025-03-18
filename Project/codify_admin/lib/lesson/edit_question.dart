@@ -132,6 +132,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                  maxLines:null,
+                  keyboardType: TextInputType.multiline,
                   controller: _questionTextController,
                   decoration: const InputDecoration(labelText: 'Question Text'),
                   validator: (value) {
@@ -183,12 +185,12 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         child: TextFormField(
           controller: _optionsControllers[index],
           decoration: InputDecoration(labelText: 'Option ${index + 1}'),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter option ${index + 1}';
-            }
-            return null;
-          },
+          // validator: (value) {
+          //   if (value == null || value.isEmpty) {
+          //     return 'Please enter option ${index + 1}';
+          //   }
+          //   return null;
+          // },
         ),
       );
     });

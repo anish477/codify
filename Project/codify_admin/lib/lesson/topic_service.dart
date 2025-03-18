@@ -37,10 +37,11 @@ class TopicService {
   // Get all topics
   Future<List<Topic>> getAllTopics() async {
     try {
-      final querySnapshot = await _topicsCollection.get();
+      final querySnapshot = await _topicsCollection.orderBy("index").get();
       return querySnapshot.docs
           .map((doc) => Topic.fromDocument(doc))
           .toList();
+
     } catch (e) {
       print('Error getting all topics: $e');
       return [];
@@ -49,6 +50,7 @@ class TopicService {
   Stream<List<Topic>> getTopicsStreamByLessonId(String lessonId) {
     return _topicsCollection
         .where('lessonIds', arrayContains: lessonId)
+        // .orderBy('index', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => Topic.fromDocument(doc)).toList();

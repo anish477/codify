@@ -8,13 +8,14 @@ class LessonService {
 
   Future<List<Lesson>> getLessonsByTopicId(String topicId) async {
     try {
-      QuerySnapshot querySnapshot = await _lessonsCollection.where(
-          'topicId', isEqualTo: topicId).get();
-      return querySnapshot.docs.map((doc) => Lesson.fromDocument(doc)).toList();
+      print('getLessonsByTopicId called with topicId: $topicId');
+      QuerySnapshot querySnapshot = await _lessonsCollection.where('topicId', isEqualTo: topicId).orderBy("index").get();
+      final lessons = querySnapshot.docs.map((doc) => Lesson.fromDocument(doc)).toList();
+      print('Lessons fetched: ${lessons.length}');
+      return lessons;
     } catch (e) {
       print('Error fetching lessons: $e');
       return [];
-
     }
   }
 

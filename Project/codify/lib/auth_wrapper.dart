@@ -1,7 +1,5 @@
-import 'package:codify/pages/add_course.dart';
 import 'package:codify/provider/lesson_provider.dart';
 import 'package:codify/provider/profile_provider.dart';
-import 'package:codify/user/redirect_add_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:codify/pages/home.dart';

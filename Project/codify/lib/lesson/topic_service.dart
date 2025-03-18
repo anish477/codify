@@ -24,7 +24,7 @@ class TopicService {
   // Get all topics
   Future<List<Topic>> getAllTopics() async {
     try {
-      final querySnapshot = await _topicsCollection.get();
+      final querySnapshot = await _topicsCollection.orderBy('index').get();
       return querySnapshot.docs
           .map((doc) => Topic.fromDocument(doc))
           .toList();

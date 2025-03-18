@@ -15,11 +15,14 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   final TopicService _topicService = TopicService();
+  final _indexController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.topic.name);
+    _indexController.text = widget.topic.index;
+
   }
 
   @override
@@ -32,6 +35,7 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
     if (_formKey.currentState!.validate()) {
       final updatedTopic = widget.topic.copyWith(
         name: _nameController.text,
+        index: _indexController.text,
       );
 
       await _topicService.updateTopic(updatedTopic);
@@ -51,6 +55,16 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
           key: _formKey,
           child: Column(
             children: [
+              TextFormField(
+                controller: _indexController,
+                decoration: const InputDecoration(labelText: 'Index'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the name';
+                  }
+                  return null;
+                },
+              ),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),

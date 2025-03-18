@@ -1,0 +1,2 @@
+C:/Users/anish/Desktop/codify/Project/codify/android/app/.cxx/RelWithDebInfo/216y4mb3/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/anish/Desktop/codify/Project/codify/android/app/.cxx/RelWithDebInfo/216y4mb3/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -15,11 +15,14 @@ class _EditLessonState extends State<EditLesson> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _questionNameController;
   final LessonService _lessonService = LessonService();
+  late var _indexController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _questionNameController = TextEditingController(text: widget.lesson.questionName);
+    _indexController= TextEditingController(text: widget.lesson.index);
+
   }
 
   @override
@@ -32,6 +35,7 @@ class _EditLessonState extends State<EditLesson> {
     if (_formKey.currentState!.validate()) {
       final updatedLesson = widget.lesson.copyWith(
         questionName: _questionNameController.text,
+        index: _indexController.text,
       );
 
       await _lessonService.updateLesson(updatedLesson);
@@ -51,6 +55,16 @@ class _EditLessonState extends State<EditLesson> {
           key: _formKey,
           child: Column(
             children: [
+              TextFormField(
+                controller: _indexController,
+                decoration: const InputDecoration(labelText: 'Index'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an index';
+                  }
+                  return null;
+                },
+              ),
               TextFormField(
                 controller: _questionNameController,
                 decoration: const InputDecoration(labelText: 'Question Name'),

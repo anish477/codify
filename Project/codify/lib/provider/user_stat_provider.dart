@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../user/user_stat_service.dart';
 import '../services/auth.dart';
 
+import 'package:flutter/material.dart';
+import '../user/user_stat_service.dart';
+import '../services/auth.dart';
+
 class UserStatProvider with ChangeNotifier {
   final UserStatService _userStatService = UserStatService();
   final AuthService _auth = AuthService();
@@ -16,7 +20,6 @@ class UserStatProvider with ChangeNotifier {
 
   UserStatProvider() {
     getUserStats();
-    notifyListeners();
   }
 
   Future<void> markQuestionAsComplete(String userId, String topicId, String questionId) async {
@@ -26,6 +29,7 @@ class UserStatProvider with ChangeNotifier {
 
     try {
       await _userStatService.markQuestionAsComplete(userId, topicId, questionId);
+      _questionIds.add(questionId);
     } catch (e) {
       _errorMessage = 'Error marking question as complete: $e';
     } finally {
@@ -34,9 +38,9 @@ class UserStatProvider with ChangeNotifier {
     }
   }
 
+
   Future<void> getUserStats() async {
     _userId = await _auth.getUID();
-    notifyListeners();
     if (_userId != null) {
       _questionIds = await _userStatService.getUserStats(_userId!);
       notifyListeners();

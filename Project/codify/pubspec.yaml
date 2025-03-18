@@ -44,11 +44,14 @@ dependencies:
   shimmer: ^3.0.0
   shared_preferences: ^2.0.6
   syncfusion_flutter_charts: ^28.2.6
+  flutter_code_editor: ^0.3.2
 
   http: any
   intl: ^0.20.2
   table_calendar: ^3.2.0
   image_cropper: ^9.0.0
+  flutter_highlight: any
+  flutter_svg: ^2.0.17
 dev_dependencies:
   flutter_test:
     sdk: flutter

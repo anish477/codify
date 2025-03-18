@@ -15,6 +15,7 @@ class _AddTopicScreenState extends State<AddTopicScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final TopicService _topicService = TopicService();
+  final _indexController = TextEditingController();
 
   @override
   void dispose() {
@@ -29,6 +30,8 @@ class _AddTopicScreenState extends State<AddTopicScreen> {
         name: _nameController.text,
         categoryId: widget.categoryId,
         lessonIds: [],
+        index: _indexController.text,
+
       );
 
       final createdTopic = await _topicService.createTopic(newTopic);
@@ -54,6 +57,16 @@ class _AddTopicScreenState extends State<AddTopicScreen> {
           key: _formKey,
           child: Column(
             children: [
+              TextFormField(
+                controller: _indexController,
+                decoration: const InputDecoration(labelText: 'Index'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an index';
+                  }
+                  return null;
+                },
+              ),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Topic Name'),

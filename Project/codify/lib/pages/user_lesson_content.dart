@@ -2,8 +2,11 @@ import 'package:codify/pages/lesson_completed_page.dart';
 import 'package:codify/provider/lives_provider.dart';
 import 'package:codify/provider/user_stat_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:highlight/languages/python.dart';
 import '../gamification/leaderboard.dart';
 import '../lesson/question.dart';
 import '../lesson/question_service.dart';
@@ -96,10 +99,12 @@ class _UserLessonContentState extends State<UserLessonContent> {
           ));
 
           await Provider.of<StreakProvider>(context, listen: false).updateStreak();
-        }
+          final userStatProvider = Provider.of<UserStatProvider>(context, listen: false);
+          await userStatProvider.markQuestionAsComplete(user,widget.documentId, _questions[_currentQuestionIndex].documentId);
 
-        Provider.of<UserStatProvider>(context,listen: false).markQuestionAsComplete(user!, widget.documentId,widget.documentId);
-        Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
+        }
+        return;
       }
     } else {
       if (_lives != null) {
@@ -176,16 +181,24 @@ class _UserLessonContentState extends State<UserLessonContent> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Color(0xFFFFFFFF),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
             Expanded(
               child: LinearProgressIndicator(
                 value: progress,
                 borderRadius: BorderRadius.circular(10),
                 backgroundColor: Colors.grey[300],
                 minHeight: 15,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
               ),
             ),
             const SizedBox(width: 19),
@@ -197,14 +210,15 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 ),
                 const SizedBox(width: 5),
                 const Icon(Icons.favorite, color: Colors.red),
-                SizedBox(width: 8,)
+                SizedBox(
+                  width: 8,
+                )
               ],
             ),
           ],
         ),
       ),
-
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: _isLoading
           ? Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
@@ -227,12 +241,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
+
+            Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +252,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -250,44 +260,46 @@ class _UserLessonContentState extends State<UserLessonContent> {
                       _questions[_currentQuestionIndex].content,
                       style: const TextStyle(fontSize: 18, color: Colors.black87),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Question:',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _questions[_currentQuestionIndex].questionText,
-                      style: const TextStyle(fontSize: 18, color: Colors.black87),
-                    ),
                   ],
                 ),
-              ),
+
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Options:',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
+
+            // Code Editor
+           Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CodeTheme(
+                  data: CodeThemeData(styles: monokaiSublimeTheme),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                    const SizedBox(height: 8),
+                    CodeField(
+                        controller: CodeController(
+                          text: _questions[_currentQuestionIndex].questionText,
+                          language: python,
+                        ),
+                        gutterStyle: GutterStyle(
+                          showLineNumbers: false,
+                        ),
+                        readOnly: true,
+                        textStyle: const TextStyle(fontSize: 16, fontFamily: 'RobotoMono')),
+                  ]),
+                ),
+
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+
+
+
+
             Expanded(
               child: ListView.builder(
                 itemCount: _questions[_currentQuestionIndex].options.length,
                 itemBuilder: (context, index) {
                   final option = _questions[_currentQuestionIndex].options[index];
                   return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+
                     child: ListTile(
                       title: Text(option, style: const TextStyle(fontSize: 16)),
                       onTap: () => _checkAnswer(index),

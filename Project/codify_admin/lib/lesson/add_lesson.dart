@@ -15,10 +15,12 @@ class _AddLessonState extends State<AddLesson> {
   final _formKey = GlobalKey<FormState>();
   final _questionNameController = TextEditingController();
   final LessonService _lessonService = LessonService();
+  final _indexController = TextEditingController();
 
   @override
   void dispose() {
     _questionNameController.dispose();
+    _indexController.dispose();
     super.dispose();
   }
 
@@ -28,6 +30,7 @@ class _AddLessonState extends State<AddLesson> {
         documentId: '', // Firestore will generate the ID
         topicId: widget.topicId,
         questionName: _questionNameController.text,
+        index: _indexController.text,
       );
 
       final createdLesson = await _lessonService.createLesson(newLesson);
@@ -53,6 +56,16 @@ class _AddLessonState extends State<AddLesson> {
           key: _formKey,
           child: Column(
             children: [
+              TextFormField(
+                controller: _indexController,
+                decoration: const InputDecoration(labelText: 'Index'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an index';
+                  }
+                  return null;
+                },
+              ),
               TextFormField(
                 controller: _questionNameController,
                 decoration: const InputDecoration(labelText: 'Question Name'),

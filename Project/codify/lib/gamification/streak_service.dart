@@ -54,8 +54,8 @@ class StreakService {
         final newStreak = Streak(
           id: '',
           userId: userId,
-          currentStreak: 1,
-          longestStreak: 1,
+          currentStreak: 0,
+          longestStreak: 0,
           lastUpdated: currentDate,
           dates: [DateTime.now()],
         );
@@ -80,7 +80,7 @@ class StreakService {
 
           print('Streak broken, resetting to 0');
           await _updateStreakDocument(
-              streak.id, 0, DateTime.now(), streak.longestStreak, streak.dates);
+              streak.id, 1, DateTime.now(), streak.longestStreak, streak.dates);
         } else {
 
           print('Streak continues, incrementing');

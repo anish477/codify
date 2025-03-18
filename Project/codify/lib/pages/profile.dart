@@ -38,7 +38,7 @@ class _ProfileState extends State<Profile> {
   bool _isLoading = false;
   List<ImageModel> images = [];
   UserDetail? _user;
-  Map<String, int> _userPointsForGraph = {};
+  final Map<String, int> _userPointsForGraph = {};
   bool _graphDataLoaded = false;
 
 
@@ -260,7 +260,7 @@ class _ProfileState extends State<Profile> {
               child: ClipOval(
                 child: Image.network(
                   imageUrl,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fill,
                   height: 120,
                   width: 120,
                   loadingBuilder: (BuildContext context, Widget child,
