@@ -5,7 +5,7 @@ import 'question_service.dart';
 class EditQuestionScreen extends StatefulWidget {
   final Question question;
 
-  const EditQuestionScreen({Key? key, required this.question}) : super(key: key);
+  const EditQuestionScreen({super.key, required this.question});
 
   @override
   _EditQuestionScreenState createState() => _EditQuestionScreenState();

@@ -5,7 +5,7 @@ import 'topic_service.dart';
 class EditTopicScreen extends StatefulWidget {
   final Topic topic;
 
-  const EditTopicScreen({Key? key, required this.topic}) : super(key: key);
+  const EditTopicScreen({super.key, required this.topic});
 
   @override
   _EditTopicScreenState createState() => _EditTopicScreenState();

@@ -5,7 +5,7 @@ import 'question_service.dart';
 class AddQuestionScreen extends StatefulWidget {
   final String lessonId; // Lesson ID to associate the question with
 
-  const AddQuestionScreen({Key? key, required this.lessonId}) : super(key: key);
+  const AddQuestionScreen({super.key, required this.lessonId});
 
   @override
   _AddQuestionScreenState createState() => _AddQuestionScreenState();

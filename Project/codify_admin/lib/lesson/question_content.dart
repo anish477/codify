@@ -8,7 +8,7 @@ import 'edit_question.dart';
 class QuestionListScreen extends StatefulWidget {
   final String lessonId;
 
-  const QuestionListScreen({Key? key, required this.lessonId}) : super(key: key);
+  const QuestionListScreen({super.key, required this.lessonId});
 
   @override
   _QuestionListScreenState createState() => _QuestionListScreenState();

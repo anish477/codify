@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:codify/provider/lives_provider.dart';
 import 'package:flutter/material.dart';
@@ -244,6 +243,10 @@ class _LessonMainState extends State<LessonMain> {
     List<Lesson> lessons = lessonProvider.lessons
         .where((lesson) => lesson.topicId == topic.documentId)
         .toList();
+    
+
+
+
 
     if (lessons.isEmpty) {
       return Container(
@@ -307,8 +310,10 @@ class _LessonMainState extends State<LessonMain> {
   };
 
 
+
   Widget _buildLessonItem(BuildContext context, Lesson lesson, LivesProvider livesProvider, int rowLength, int index, Topic topic) {
     final topicColors = _topicColors[topic.name] ?? _topicColors["default"]!;
+    final userState = Provider.of<UserStatProvider>(context);
     return Column(
       children: [
         const SizedBox(
@@ -318,23 +323,42 @@ class _LessonMainState extends State<LessonMain> {
           alignment: Alignment.center,
           children: [
             _buildDirectionalArrow(rowLength, index),
-            _circleIcon(
-              Icons.play_circle_fill,
-              topicColors.lessonColor,
-              onTap: () async {
-                if (livesProvider.lives?.currentLives == 0) {
-                  _showNoLivesDialog(context);
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          UserLessonContent(documentId: lesson.documentId),
-                    ),
-                  );
-                }
-              },
-            ),
+            if (userState.questionIds.contains(lesson.documentId))
+              _circleIcon(
+                Icons.play_circle_fill,
+                Colors.grey,
+                onTap: () async {
+                  if (livesProvider.lives?.currentLives == 0) {
+                    _showNoLivesDialog(context);
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            UserLessonContent(documentId: lesson.documentId),
+                      ),
+                    );
+                  }
+                },
+              )
+            else
+              _circleIcon(
+                Icons.play_circle_fill,
+                topicColors.lessonColor,
+                onTap: () async {
+                  if (livesProvider.lives?.currentLives == 0) {
+                    _showNoLivesDialog(context);
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            UserLessonContent(documentId: lesson.documentId),
+                      ),
+                    );
+                  }
+                },
+              ),
           ],
         ),
         Text(
@@ -400,27 +424,6 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  void _showLockedLessonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Lesson Locked'),
-          content:
-          const Text('You need to complete the previous lessons to unlock this one.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _TopicColors {

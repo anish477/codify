@@ -5,7 +5,7 @@ import 'question_service.dart';
 class QuestionDetailScreen extends StatefulWidget {
   final String documentId;
 
-  const QuestionDetailScreen({Key? key, required this.documentId}) : super(key: key);
+  const QuestionDetailScreen({super.key, required this.documentId});
 
   @override
   _QuestionDetailScreenState createState() => _QuestionDetailScreenState();
@@ -58,7 +58,7 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
             Text('Rewards: ${_question!.rewards}'),
             Text('Question Text: ${_question!.questionText}'),
             // Display options
-            ..._question!.options.map((option) => Text('Option: $option')).toList(),
+            ..._question!.options.map((option) => Text('Option: $option')),
             Text('Correct Option: Option ${_question!.correctOption + 1}'),
             Text('Feedback: ${_question!.feedback}'),
           ],

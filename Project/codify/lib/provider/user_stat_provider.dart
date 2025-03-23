@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../user/user_stat_service.dart';
 import '../services/auth.dart';
 
-import 'package:flutter/material.dart';
-import '../user/user_stat_service.dart';
-import '../services/auth.dart';
 
 class UserStatProvider with ChangeNotifier {
   final UserStatService _userStatService = UserStatService();
