@@ -54,6 +54,8 @@ dependencies:
   flutter_svg: ^2.0.17
   highlight: any
   collection: any
+  flutter_blockly: ^1.6.0
+  cached_network_image: ^3.4.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

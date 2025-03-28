@@ -6,6 +6,8 @@ import 'package:codify/pages/leaderboard_content.dart';
 import 'package:codify/pages/lesson_main.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../gamification/blockly.dart';
+
 
 
 void main()=>runApp(const MaterialApp(
@@ -37,7 +39,8 @@ class _HomeState extends State<Home> {
           backgroundColor: Color(0xFFFFFFFF),
         destinations: const [
           NavigationDestination(selectedIcon: Icon(LucideIcons.home,),icon:  Icon(LucideIcons.home,color: Colors.amber) , label: 'Home'),
-          NavigationDestination(selectedIcon: Icon(LucideIcons.dumbbell),icon:  Icon(LucideIcons.dumbbell,color: Colors.blue,) , label: 'Traning'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.dumbbell),icon:  Icon(LucideIcons.dumbbell,color: Colors.blue,) , label: 'Training'),
+          NavigationDestination(selectedIcon: Icon(LucideIcons.joystick), icon: Icon(LucideIcons.joystick,color: Colors.purpleAccent), label: 'Blockly'),
           NavigationDestination(selectedIcon: Icon(LucideIcons.award), icon:Icon(LucideIcons.award,color: Colors.green) , label: 'Leaderboard'),
           NavigationDestination(selectedIcon: Icon(LucideIcons.user), icon: Icon(LucideIcons.user,color: Colors.redAccent), label: 'Profile'),
 
@@ -51,9 +54,11 @@ class _HomeState extends State<Home> {
       body:  <Widget>[
          LessonMain(),
         Training(),
+        WebViewApp(),
          LeaderboardPage(),
       
         Profile(),
+
 
 
 
