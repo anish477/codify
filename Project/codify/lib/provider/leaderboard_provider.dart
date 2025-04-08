@@ -11,10 +11,15 @@ class LeaderboardProvider extends ChangeNotifier {
   Map<String, int> _userPoints = {};
   Map<String, int> _userPointsForGraph = {};
   String? _userId;
+  Map<String, dynamic> _weeklyPointsData = {};
+  int _totalWeeklyPoints = 0;
+  bool _wasPointsReset = false;
 
   List<Leaderboard> get leaderboardEntries => _leaderboardEntries;
   Map<String, int> get userPoints => _userPoints;
   Map<String, int> get userPointsForGraph => _userPointsForGraph;
+  int get totalWeeklyPoints => _totalWeeklyPoints;
+  bool get wasPointsReset => _wasPointsReset;
 
   LeaderboardProvider() {
     _initializeLeaderboard();
@@ -56,16 +61,23 @@ class LeaderboardProvider extends ChangeNotifier {
 
   Future<void> getTotalPointsByUserPerDayLast7Days() async {
     if (_userId != null) {
-      _userPointsForGraph = await _leaderboardService.getTotalPointsByUserPerDayLast7Days(_userId!);
+      _weeklyPointsData = await _leaderboardService.getWeeklyPointsWithReset(_userId!);
+      _totalWeeklyPoints = _weeklyPointsData['totalPoints'] ?? 0;
+      _wasPointsReset = _weeklyPointsData['wasReset'] ?? false;
+
+      // Notify UI about potential reset
+      if (_wasPointsReset) {
+        // You might want to show a notification to the user
+        // that their points were reset for the new week
+      }
+
       notifyListeners();
-    }else{
+    } else {
       _userId = await _authService.getUID();
-      if(_userId != null){
-        _userPointsForGraph = await _leaderboardService.getTotalPointsByUserPerDayLast7Days(_userId!);
-        notifyListeners();
+      if (_userId != null) {
+        await getTotalPointsByUserPerDayLast7Days();
       }
     }
-
   }
 
   Future<void> refreshLeaderboard() async {

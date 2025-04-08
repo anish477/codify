@@ -17,7 +17,6 @@ class AuthService {
 
   Future<User?> signInWithGoogle() async {
     try {
-
       await _googleSignIn.signOut();
 
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -71,22 +70,11 @@ class AuthService {
       } else if (e.code == 'wrong-password') {
         return 'Wrong password provided for that user.';
       }
-      // else{
-      //   // Handle other FirebaseAuthException cases
-      //   return '${e.message}';
-      // }
       else{
         return 'Email or Password Invalid';
       }
-
-
-
     }
     return null;
-    // catch (e) {
-    //   print("Error during email/password sign-in: ${e.message}");
-    //   return null;
-    // }
   }
 
   Future<void> signOut() async {
@@ -97,23 +85,57 @@ class AuthService {
       print("Error signing out: $e");
     }
   }
+
   Future<String> sendPasswordResetEmail(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-
       if (e.code == 'auth/ invalid-email') {
         return 'No user found for that email.';
       } else {
         return ' ${e.message}';
       }
     } catch (e) {
-
       return 'An error occurred: $e';
     }
     return '';
   }
 
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user == null) {
+        throw 'No user is currently signed in';
+      }
 
+      // Get user email
+      final String? email = user.email;
+      if (email == null) {
+        throw 'User email is not available';
+      }
+
+      // Re-authenticate the user with their current credentials
+      final AuthCredential credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Update the password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw 'Current password is incorrect';
+      } else if (e.code == 'weak-password') {
+        throw 'New password is too weak';
+      } else if (e.code == 'requires-recent-login') {
+        throw 'Please sign in again before changing your password';
+      } else {
+        throw 'Error: ${e.message}';
+      }
+    } catch (e) {
+      throw 'Failed to change password: $e';
+    }
+  }
 }
-

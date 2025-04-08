@@ -3,6 +3,8 @@ import "package:codify/services/auth.dart";
 import 'package:codify/pages/add_course.dart';
 import 'package:codify/pages/add_profile.dart';
 
+import 'change_password.dart';
+
 class Setting extends StatefulWidget {
   const Setting({super.key});
 
@@ -82,6 +84,31 @@ class _SettingState extends State<Setting> {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => AddCourse()));
                 },
               ),
+
+            ),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: Icon(Icons.password, color: Colors.blue),
+                title: const Text("Change Password"),
+                trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChangePassword()));
+                },
+              ),
+
             ),
             const SizedBox(height: 50),
             Container(
