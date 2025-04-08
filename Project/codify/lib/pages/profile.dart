@@ -38,9 +38,8 @@ class _ProfileState extends State<Profile> {
   bool _isLoading = false;
   List<ImageModel> images = [];
   UserDetail? _user;
-  final Map<String, int> _userPointsForGraph = {};
   bool _graphDataLoaded = false;
-
+  Map<String, int> _userDailyPoints = {};
 
   StreamSubscription? _userStreamSubscription;
 
@@ -86,7 +85,7 @@ class _ProfileState extends State<Profile> {
     try {
       await _fetchUserImage();
       await _fetchUserData();
-      await _fetchUserPoints(); // Fetch points first
+      await _fetchUserPoints();
     } catch (e) {
       print("Error fetching user data: $e");
       if (mounted) {
@@ -113,7 +112,6 @@ class _ProfileState extends State<Profile> {
         });
       }
     }
-    print("Fetched images: $images");
   }
 
   Future<void> _fetchUserData() async {
@@ -134,7 +132,15 @@ class _ProfileState extends State<Profile> {
   }
 
   Future<void> _fetchUserPoints() async {
-    await Provider.of<LeaderboardProvider>(context, listen: false).getTotalPointsByUserPerDayLast7Days();
+    final provider = Provider.of<LeaderboardProvider>(context, listen: false);
+    await provider.getTotalPointsByUserPerDayLast7Days();
+
+    // Fetch daily points data for current user
+    final String? userId = await _auth.getUID();
+    if (userId != null) {
+      _userDailyPoints = await _leaderboardService.getUserPointsByDay(userId);
+      print("user point$_userDailyPoints");
+    }
 
     setState(() {
       _graphDataLoaded = true;
@@ -149,11 +155,9 @@ class _ProfileState extends State<Profile> {
 
   @override
   void dispose() {
-    // Cancel the stream subscription in dispose:
     _userStreamSubscription?.cancel();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -367,17 +371,23 @@ class _ProfileState extends State<Profile> {
   }
 
   List<ChartData> _prepareChartData() {
-    final graphLeaderboard = Provider.of<LeaderboardProvider>(context);
-
     List<ChartData> chartData = [];
 
-    if (graphLeaderboard.userPointsForGraph.isNotEmpty) {
-      for (int i = 0; i < graphLeaderboard.userPointsForGraph.length; i++) {
-        DateTime date = DateTime.parse(graphLeaderboard.userPointsForGraph.keys.elementAt(i));
-        int points = graphLeaderboard.userPointsForGraph.values.elementAt(i);
-        chartData.add(ChartData(date, points));
-      }
+    if (_userDailyPoints.isNotEmpty) {
+      // Convert map entries to chart data points
+      _userDailyPoints.forEach((dateStr, points) {
+        try {
+          DateTime date = DateTime.parse(dateStr);
+          chartData.add(ChartData(date, points));
+        } catch (e) {
+          print('Error parsing date: $dateStr - $e');
+        }
+      });
+
+      // Sort chart data by date
+      chartData.sort((a, b) => a.date.compareTo(b.date));
     } else {
+      // Fallback for empty data
       DateTime now = DateTime.now();
       for (int i = 6; i >= 0; i--) {
         DateTime date = now.subtract(Duration(days: i));

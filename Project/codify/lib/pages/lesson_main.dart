@@ -209,7 +209,7 @@ class _LessonMainState extends State<LessonMain> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
-          height: 60,
+          height: 80,
           width: constraints.maxWidth,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
