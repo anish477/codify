@@ -5,6 +5,7 @@ import '../user/user_mistake_service.dart';
 import '../lesson/question_service.dart';
 import '../lesson/question.dart';
 import '../services/auth.dart';
+import 'lesson_completed_page.dart';
 
 class TrainingMistake extends StatefulWidget {
   const TrainingMistake({super.key});
@@ -20,6 +21,9 @@ class _TrainingMistakeState extends State<TrainingMistake> {
   List<UserMistake> _mistakes = [];
   bool _isLoading = true;
   int _currentMistakeIndex = 0;
+  int _totalAttempts = 0;
+  int _correctAnswers = 0;
+  DateTime _startTime = DateTime.now();
 
   @override
   void initState() {
@@ -56,11 +60,30 @@ class _TrainingMistakeState extends State<TrainingMistake> {
 
   Future<void> _checkAnswer(int selectedOption, Question question) async {
     bool isCorrectAnswer = question.correctOption == selectedOption;
+    _totalAttempts++;
 
     if (isCorrectAnswer) {
+      final Duration timeSpent = DateTime.now().difference(_startTime);
+      final double accuracy = _totalAttempts > 0
+          ? (_correctAnswers / _totalAttempts) * 100
+          : 100.0;
       setState(() {
         _userMistakeService.deleteUserMistake(question.documentId);
         _mistakes.removeAt(_currentMistakeIndex);
+        if(_mistakes.isEmpty){
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (BuildContext context) => LessonCompletedPage(
+                    pointsEarned: _correctAnswers * 5,
+                    lessonId: 'mistakes-training',
+                    timeToComplete: timeSpent,
+                    accuracy: accuracy,
+                  )
+              )
+          );
+          return;
+        }
         if (_currentMistakeIndex >= _mistakes.length) {
           _currentMistakeIndex = 0;
         }
@@ -75,27 +98,7 @@ class _TrainingMistakeState extends State<TrainingMistake> {
       }
     }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isCorrectAnswer ? 'Correct!' : 'Incorrect!'),
-          content: Text(
-            isCorrectAnswer
-                ? 'Well done!'
-                : 'Incorrect answer, try again!\nFeedback: ${question.feedback}',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+
   }
 
   @override

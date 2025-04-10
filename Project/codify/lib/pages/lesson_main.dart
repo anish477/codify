@@ -291,22 +291,32 @@ class _LessonMainState extends State<LessonMain> {
   final Map<String, _TopicColors> _topicColors = {
 
     "Writing Code" : _TopicColors(
-      headerColor: Colors.lightBlue,
-      lessonColor: Colors.lightBlue,
+      headerColor: Color(0xFFFF8020),
+      lessonColor: Color(0xFFFFC300),
     ),
     "Memory & Variable" : _TopicColors(
-      headerColor: Colors.redAccent,
-      lessonColor: Colors.redAccent,
+      headerColor: Color(0xFF8549BA),
+      lessonColor: Color(0xFFA560E8),
     ),
     "Numerical Data" : _TopicColors(
-      headerColor: Colors.amber,
-      lessonColor: Colors.amber,
+      headerColor: Color(0xFFFA881B),
+      lessonColor: Color(0xFFFF9400),
     ),
 
     "default" : _TopicColors(
-      headerColor: Colors.greenAccent,
-      lessonColor: Colors.greenAccent,
-    )
+      headerColor: Color(0xFF7AC70C),
+      lessonColor: Color(0xFF8EE000),
+    ),
+
+    // "default" : _TopicColors(
+    //   headerColor: Color(0xFFD33131),
+    //   lessonColor: Color(0xFFe53B3B),
+    // ),
+    // "default" : _TopicColors(
+    //   headerColor: Color(0xFF4C4C4C),
+    //   lessonColor: Color(0xFF777777),
+    // ),
+
   };
 
 

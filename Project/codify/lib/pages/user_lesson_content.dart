@@ -35,6 +35,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final LeaderboardService _leaderboardService = LeaderboardService();
   final StreakService _streakService = StreakService();
   final LivesService _livesService = LivesService();
+  bool _isSubmittingFinal=false;
 
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
@@ -44,9 +45,15 @@ class _UserLessonContentState extends State<UserLessonContent> {
   int lessonPoints = 0;
   Lives? _lives;
 
+  // Metrics for lesson completion
+  DateTime _lessonStartTime = DateTime.now();
+  int _correctAnswers = 0;
+  int _totalAttempts = 0;
+
   @override
   void initState() {
     super.initState();
+    _lessonStartTime = DateTime.now();
     _initializeData();
   }
 
@@ -75,13 +82,18 @@ class _UserLessonContentState extends State<UserLessonContent> {
       });
     }
   }
-
   Future<void> _checkAnswer(int selectedOption) async {
+
+    setState(() {
+      _totalAttempts++;
+    });
+
     if (_questions[_currentQuestionIndex].correctOption == selectedOption) {
       setState(() {
         _isCorrectAnswer = true;
         _showFeedback = true;
         lessonPoints += _questions[_currentQuestionIndex].rewards;
+        _correctAnswers++;
       });
 
       if (_currentQuestionIndex < _questions.length - 1) {
@@ -89,20 +101,58 @@ class _UserLessonContentState extends State<UserLessonContent> {
           _currentQuestionIndex++;
         });
       } else {
+
+        setState(() {
+          _isSubmittingFinal = true;
+        });
+
         final String? user = await _auth.getUID();
         if (user != null) {
-          await _leaderboardService.addLeaderboardEntry(Leaderboard(
-            userId: user,
-            points: lessonPoints,
-            timestamp: DateTime.now(),
-            documentId: '',
-          ));
+          try {
+            await _leaderboardService.addLeaderboardEntry(Leaderboard(
+              userId: user,
+              points: lessonPoints,
+              timestamp: DateTime.now(),
+              documentId: '',
+            ));
 
-          await Provider.of<StreakProvider>(context, listen: false).updateStreak();
-          final userStatProvider = Provider.of<UserStatProvider>(context, listen: false);
-          await userStatProvider.markQuestionAsComplete(user,widget.documentId, _questions[_currentQuestionIndex].documentId);
+            await Provider.of<StreakProvider>(context, listen: false).updateStreak();
+            final userStatProvider = Provider.of<UserStatProvider>(context, listen: false);
+            await userStatProvider.markQuestionAsComplete(
+                user,
+                widget.documentId,
+                _questions[_currentQuestionIndex].documentId
+            );
 
-          Navigator.push(context, MaterialPageRoute(builder: (context) => LessonCompletedPage()));
+            double accuracy = _totalAttempts > 0 ? (_correctAnswers / _totalAttempts) * 100.0 : 0.0;
+
+            // Hiding loading before navigation
+            if (mounted) {
+              setState(() {
+                _isSubmittingFinal = false;
+              });
+
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => LessonCompletedPage(
+                        pointsEarned: lessonPoints,
+                        lessonId: widget.documentId,
+                        timeToComplete: DateTime.now().difference(_lessonStartTime),
+                        accuracy: accuracy,
+                      )
+                  )
+              );
+            }
+          } catch (e) {
+            // Handling errors and reset loading state
+            print('Error completing lesson: $e');
+            if (mounted) {
+              setState(() {
+                _isSubmittingFinal = false;
+              });
+            }
+          }
         }
         return;
       }
@@ -179,10 +229,11 @@ class _UserLessonContentState extends State<UserLessonContent> {
     final livesProvider = Provider.of<LivesProvider>(context);
     double progress = _questions.isNotEmpty ? (_currentQuestionIndex + 1) / _questions.length : 0.0;
 
-    return Scaffold(
+    // Building the main contain of the screen
+    Widget mainContent = Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFFFFFFF),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -198,7 +249,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 borderRadius: BorderRadius.circular(10),
                 backgroundColor: Colors.grey[300],
                 minHeight: 15,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
               ),
             ),
             const SizedBox(width: 19),
@@ -210,9 +261,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 ),
                 const SizedBox(width: 5),
                 const Icon(Icons.favorite, color: Colors.red),
-                SizedBox(
-                  width: 8,
-                )
+                const SizedBox(width: 8)
               ],
             ),
           ],
@@ -241,57 +290,53 @@ class _UserLessonContentState extends State<UserLessonContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _questions[_currentQuestionIndex].title,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-
-                      ),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _questions[_currentQuestionIndex].title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _questions[_currentQuestionIndex].content,
-                      style: const TextStyle(fontSize: 18, color: Colors.black87),
-                    ),
-                  ],
-                ),
-
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _questions[_currentQuestionIndex].content,
+                    style: const TextStyle(fontSize: 18, color: Colors.black87),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
             // Code Editor
-           Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: CodeTheme(
-                  data: CodeThemeData(styles: monokaiSublimeTheme),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-                    const SizedBox(height: 8),
-                    CodeField(
-                        controller: CodeController(
-                          text: _questions[_currentQuestionIndex].questionText,
-                          language: python,
-                        ),
-                        gutterStyle: GutterStyle(
-                          showLineNumbers: false,
-                        ),
-                        readOnly: true,
-                        textStyle: const TextStyle(fontSize: 16, fontFamily: 'RobotoMono')),
-                  ]),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CodeTheme(
+                data: CodeThemeData(styles: monokaiSublimeTheme),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      CodeField(
+                          controller: CodeController(
+                            text: _questions[_currentQuestionIndex].questionText,
+                            language: python,
+                          ),
+                          gutterStyle: const GutterStyle(
+                            showLineNumbers: false,
+                          ),
+                          readOnly: true,
+                          textStyle: const TextStyle(fontSize: 16, fontFamily: 'RobotoMono')
+                      ),
+                    ]
                 ),
-
+              ),
             ),
             const SizedBox(height: 16),
-
-
-
 
             Expanded(
               child: ListView.builder(
@@ -299,7 +344,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 itemBuilder: (context, index) {
                   final option = _questions[_currentQuestionIndex].options[index];
                   return Card(
-
                     child: ListTile(
                       title: Text(option, style: const TextStyle(fontSize: 16)),
                       onTap: () => _checkAnswer(index),
@@ -316,6 +360,39 @@ class _UserLessonContentState extends State<UserLessonContent> {
           ],
         ),
       ),
+    );
+
+    //Ui to indicate the completion of lesson
+    return Stack(
+      children: [
+        mainContent,
+        if (_isSubmittingFinal)
+          Container(
+            color: Colors.black54,
+            child: Center(
+
+
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      CircularProgressIndicator(color: Color(0xFF1cb0f6),),
+                      SizedBox(height: 16),
+                      // Text(
+                      //   "Completing lesson...",
+                      //   style: TextStyle(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.bold
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:codify/provider/streak_provider.dart';
 import 'package:codify/user/user.dart';
 import 'package:flutter/material.dart';
@@ -262,32 +263,25 @@ class _ProfileState extends State<Profile> {
               radius: 70,
               backgroundColor: Colors.amber,
               child: ClipOval(
-                child: Image.network(
-                  imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
                   fit: BoxFit.fill,
                   height: 120,
                   width: 120,
-                  loadingBuilder: (BuildContext context, Widget child,
-                      ImageChunkEvent? loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(
-                        width: 120.0,
-                        height: 120.0,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
-                  errorBuilder: (BuildContext context, Object error,
-                      StackTrace? stackTrace) {
-                    return const Icon(
-                      Icons.error,
-                      color: Colors.red,
-                      size: 120.0,
-                    );
-                  },
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: 120.0,
+                      height: 120.0,
+                      color: Colors.white,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.error,
+                    color: Colors.red,
+                    size: 120.0,
+                  ),
                 ),
               ),
             ),

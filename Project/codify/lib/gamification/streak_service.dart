@@ -12,9 +12,10 @@ class StreakService {
     return formatter.format(now);
   }
 
-  Future<void> addStreak(Streak streak) async {
+  Future<String> addStreak(Streak streak) async {
     try {
-      await _streakCollection.add(streak.toMap());
+      DocumentReference docRef = await _streakCollection.add(streak.toMap());
+      return docRef.id;
     } catch (e) {
       print('Error adding streak: $e');
       rethrow;
@@ -41,7 +42,6 @@ class StreakService {
   }
 
   Future<void> updateStreak(String userId) async {
-
     final currentDate = _getCurrentDate();
     Streak? streak = await getStreakForUser(userId);
 
@@ -50,24 +50,26 @@ class StreakService {
       final startOfToday = DateTime(today.year, today.month, today.day);
 
       if (streak == null) {
-        // No existing streak.
+
         final newStreak = Streak(
           id: '',
           userId: userId,
-          currentStreak: 0,
-          longestStreak: 0,
+          currentStreak: 1,
+          longestStreak: 1,
           lastUpdated: currentDate,
           dates: [DateTime.now()],
         );
-        await addStreak(newStreak);
+
+        String docId = await addStreak(newStreak);
+
+        await _streakCollection.doc(docId).update({'id': docId});
       } else {
-        // Check if streak was already updated today
+
         final lastUpdatedDate = DateTime.parse(streak.lastUpdated);
         final lastUpdatedDay =
         DateTime(lastUpdatedDate.year, lastUpdatedDate.month, lastUpdatedDate.day);
 
         if (lastUpdatedDay.isAtSameMomentAs(startOfToday)) {
-
           print('Streak already updated today');
           return;
         }
@@ -78,9 +80,10 @@ class StreakService {
 
         if (!lastUpdatedIsYesterday && lastUpdatedDay.isBefore(yesterday)) {
 
-          print('Streak broken, resetting to 0');
+          print('Streak broken, resetting to 1');
+          final newDates = List<DateTime>.from(streak.dates)..add(DateTime.now());
           await _updateStreakDocument(
-              streak.id, 1, DateTime.now(), streak.longestStreak, streak.dates);
+              streak.id, 1, streak.longestStreak, newDates);
         } else {
 
           print('Streak continues, incrementing');
@@ -88,30 +91,25 @@ class StreakService {
           final newLongestStreak =
           newStreakCount > streak.longestStreak ? newStreakCount : streak.longestStreak;
           final newDates = List<DateTime>.from(streak.dates)..add(DateTime.now());
-          await _updateStreakDocument(streak.id, newStreakCount, DateTime.now(),
-              newLongestStreak, newDates);
+          await _updateStreakDocument(
+              streak.id, newStreakCount, newLongestStreak, newDates);
         }
       }
-      
-
     } catch (e) {
       print('Error updating streak: $e');
       rethrow;
     }
-
-
   }
 
   Future<void> _updateStreakDocument(String docId, int currentStreak,
-      DateTime lastUpdated, int longestStreak, List<DateTime> dates) async {
+      int longestStreak, List<DateTime> dates) async {
     try {
       await _streakCollection.doc(docId).update({
         'currentStreak': currentStreak,
-        'lastUpdated': lastUpdated.toIso8601String(),
+        'lastUpdated': _getCurrentDate(),
         'longestStreak': longestStreak,
         'dates': dates.map((date) => date.toIso8601String()).toList(),
       });
-
     } catch (e) {
       print('Error updating streak document: $e');
       rethrow;
