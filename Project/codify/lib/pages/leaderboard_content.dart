@@ -466,7 +466,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor!, width: 3),
+        border: Border.all(color: borderColor, width: 3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),

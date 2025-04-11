@@ -27,10 +27,12 @@ class _TrainingState extends State<Training> {
     try {
       final userId = await _auth.getUID();
       final mistakes = await _userMistakeService.getUserMistakes(userId!);
+      final count=await _userMistakeService.getQuestionCount(userId);
+
 
       if (mounted) {
         setState(() {
-          _totalMistakes = mistakes.length;
+          _totalMistakes=count;
           _isLoading = false;
         });
       }
@@ -123,6 +125,7 @@ class _TrainingState extends State<Training> {
                       ),
                     ),
                     Text(
+
                       "$_totalMistakes",
                       style: const TextStyle(
                         fontSize: 18,

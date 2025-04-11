@@ -31,12 +31,20 @@ class UserMistakeService {
     }
   }
 
-  Future<void> deleteUserMistake(String documentId) async {
+  Future<void> deleteUserMistake(String mistake) async {
     try {
-      await _userMistakeCollection.doc(documentId).delete();
+      final querySnapshot = await _userMistakeCollection.where('mistake', isEqualTo: mistake).get();
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
     } catch (e) {
       print('Error deleting user mistake: $e');
     }
+  }
+
+  Future<int> getQuestionCount(String userId)async {
+    final querySnapshot = await _userMistakeCollection.where('userId', isEqualTo: userId).get();
+    return querySnapshot.docs.map((doc) => UserMistake.fromMap(doc.data() as Map<String, dynamic>)).toList().length;
   }
 
 

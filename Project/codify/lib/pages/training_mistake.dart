@@ -22,8 +22,8 @@ class _TrainingMistakeState extends State<TrainingMistake> {
   bool _isLoading = true;
   int _currentMistakeIndex = 0;
   int _totalAttempts = 0;
-  int _correctAnswers = 0;
-  DateTime _startTime = DateTime.now();
+  final int _correctAnswers = 0;
+  final DateTime _startTime = DateTime.now();
 
   @override
   void initState() {
@@ -68,7 +68,8 @@ class _TrainingMistakeState extends State<TrainingMistake> {
           ? (_correctAnswers / _totalAttempts) * 100
           : 100.0;
       setState(() {
-        _userMistakeService.deleteUserMistake(question.documentId);
+        print("${_mistakes.first.mistake}");
+        _userMistakeService.deleteUserMistake(_mistakes.first.mistake);
         _mistakes.removeAt(_currentMistakeIndex);
         if(_mistakes.isEmpty){
           Navigator.pushReplacement(
