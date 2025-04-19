@@ -38,4 +38,11 @@ class LivesProvider extends ChangeNotifier {
                   notifyListeners();
             }
       }
+      void reset() {
+            // Reset all data lists
+            _lives=null;
+
+            notifyListeners();
+      }
+
 }

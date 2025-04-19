@@ -45,8 +45,15 @@ class StreakProvider extends ChangeNotifier {
       await getStreak();
     }
   }
+  void reset() {
+    _streak=null;
+
+    notifyListeners();
+  }
 
   void _showError(String message) {
 
   }
+
+
 }

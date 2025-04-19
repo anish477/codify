@@ -155,7 +155,7 @@ class _AddProfileState extends State<AddProfile> {
       documentId: _isEditing ? _userDetails.first.documentId : "",
       name: _nameTextController.text,
       age: int.parse(_ageTextController.text),
-      userId: userId,
+      userId: userId, fcmToken: '',
     );
 
     try {

@@ -4,6 +4,7 @@ import 'package:codify/provider/lives_provider.dart';
 import 'package:codify/provider/profile_provider.dart';
 import 'package:codify/provider/streak_provider.dart';
 import 'package:codify/provider/user_stat_provider.dart';
+import 'package:codify/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -16,6 +17,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   runApp(const MyApp());
 }
@@ -34,7 +37,8 @@ class MyApp extends StatelessWidget {
       ChangeNotifierProvider(create: (context)=>StreakProvider()),
       ChangeNotifierProvider(create: (context)=>ProfileProvider(),),
       ChangeNotifierProvider(create: (context)=>LeaderboardProvider()),
-      ChangeNotifierProvider(create: (context)=>UserStatProvider())
+      ChangeNotifierProvider(create: (context)=>UserStatProvider()),
+      ChangeNotifierProvider(create: (context)=>ProfileProvider())
 
 
     ],

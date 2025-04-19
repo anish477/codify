@@ -1,5 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/provider_reset_service.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
@@ -77,10 +81,13 @@ class AuthService {
     return null;
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
       print("User signed out successfully!");
+      Provider.of<ProviderResetService>(context, listen: false).resetAllProviders();
+
+
     } catch (e) {
       print("Error signing out: $e");
     }

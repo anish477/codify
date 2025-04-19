@@ -124,7 +124,7 @@ class _SettingState extends State<Setting> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  _auth.signOut();
+                  _auth.signOut(context);
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 style: ElevatedButton.styleFrom(

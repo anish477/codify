@@ -7,6 +7,7 @@ class UserDetail {
   final String? userId;
   late final bool hasBeenRedirected;
   final bool profileComplete;
+  String? fcmToken;
 
   UserDetail({
     required this.documentId,
@@ -15,6 +16,7 @@ class UserDetail {
     required this.userId,
     this.hasBeenRedirected = false,
     this.profileComplete = false,
+    required this.fcmToken,
   });
 
   factory UserDetail.fromDocument(DocumentSnapshot doc) {
@@ -26,6 +28,7 @@ class UserDetail {
       userId: data['userId'],
       hasBeenRedirected: data['hasBeenRedirected'] ?? false,
       profileComplete: data['profileComplete'] ?? false,
+      fcmToken: data['fcmToken'],
     );
   }
 
@@ -36,6 +39,7 @@ class UserDetail {
       'userId': userId,
       'hasBeenRedirected': hasBeenRedirected,
       'profileComplete': profileComplete,
+      'fcmToken':fcmToken,
     };
   }
 }

@@ -1,4 +1,4 @@
-
+import 'package:codify/pages/redirect_add_lesson.dart';
 import 'package:codify/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:codify/user/user_service.dart';
@@ -57,27 +57,27 @@ class _ProfileState extends State<RedirectProfile> {
                 children: <Widget>[
                   _isLoading
                       ? Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      height: 56,
-                      width: double.infinity,
-                      color: Colors.white,
-                    ),
-                  )
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(
+                            height: 56,
+                            width: double.infinity,
+                            color: Colors.white,
+                          ),
+                        )
                       : TextFormField(
-                    controller: _nameTextController,
-                    decoration: const InputDecoration(
-                      labelText: "Name",
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
-                  ),
+                          controller: _nameTextController,
+                          decoration: const InputDecoration(
+                            labelText: "Name",
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
+                        ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _ageTextController,
@@ -90,7 +90,8 @@ class _ProfileState extends State<RedirectProfile> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your age';
                       }
-                      if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                      if (int.tryParse(value) == null ||
+                          int.parse(value) <= 0) {
                         return 'Please enter a valid age';
                       }
                       return null;
@@ -104,8 +105,10 @@ class _ProfileState extends State<RedirectProfile> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -146,6 +149,7 @@ class _ProfileState extends State<RedirectProfile> {
       name: _nameTextController.text,
       age: int.parse(_ageTextController.text),
       userId: userId,
+      fcmToken: '',
     );
 
     try {
@@ -156,7 +160,8 @@ class _ProfileState extends State<RedirectProfile> {
       }
 
       if (mounted) {
-         // Provider.of<ProfileProvider>(context, listen:false).setHasRedirected();
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => RedirectAddCourse()));
       }
     } catch (e) {
       print("Error saving user data: $e");
@@ -197,15 +202,13 @@ class _ProfileState extends State<RedirectProfile> {
           });
         }
       }
-
-
-
     } catch (e) {
       print("Error fetching user data: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to fetch user data. Please try again later.'),
+            content: const Text(
+                'Failed to fetch user data. Please try again later.'),
             action: SnackBarAction(
               label: "Retry",
               onPressed: _fetchUserData,

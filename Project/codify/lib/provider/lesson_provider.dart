@@ -258,8 +258,27 @@ class LessonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // void reset() {
-  //   _lessons = [];
-  //   notifyListeners();
-  // }
+  void reset() {
+
+    _userLessons = [];
+    _topics = [];
+    _lessons = [];
+    _selectedCategories.clear();
+
+
+    isLoading = true;
+    isPanelOpen = false;
+    isTopicLessonsLoading = false;
+
+
+    _selectedCategoryName = null;
+    _userId = null;
+    errorMessage = null;
+    _selectedTopicId = null;
+    _selectedCategoryId = null;
+    _userCategoryName = null;
+    _questionId = null;
+
+    notifyListeners();
+  }
 }

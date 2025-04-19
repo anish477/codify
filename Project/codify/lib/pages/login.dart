@@ -36,7 +36,10 @@ class _LoginState extends State<Login> {
               const SizedBox(height: 20),
               const Text(
                 "Welcome Learner",
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
               ),
               const SizedBox(height: 45),
               SizedBox(
@@ -77,7 +80,9 @@ class _LoginState extends State<Login> {
                     labelText: "Password",
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                        _passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -110,14 +115,14 @@ class _LoginState extends State<Login> {
                         isLoading = true;
                         error = '';
                       });
-                      final user = await _auth.loginUserWithEmailAndPassword(email, password);
+                      final user = await _auth.loginUserWithEmailAndPassword(
+                          email, password);
                       setState(() {
                         isLoading = false;
                         if (user is String) {
                           error = user;
-                        }
-                        else if(user==null){
-                          error='';
+                        } else if (user == null) {
+                          error = '';
                         }
                       });
                     }
@@ -148,7 +153,8 @@ class _LoginState extends State<Login> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ForgotPassword()),
+                    MaterialPageRoute(
+                        builder: (context) => const ForgotPassword()),
                   );
                 },
                 child: const Text(
@@ -162,7 +168,10 @@ class _LoginState extends State<Login> {
               const SizedBox(height: 10),
               const Text(
                 "Log in with",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal, color: Colors.black54),
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black54),
               ),
               const SizedBox(height: 25),
               SizedBox(
@@ -188,11 +197,15 @@ class _LoginState extends State<Login> {
               const SizedBox(height: 25),
               GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const Signup()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const Signup()));
                 },
                 child: const Text(
                   "Don't have an account? Sign Up",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal, color: Colors.black54),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black54),
                 ),
               ),
             ],
