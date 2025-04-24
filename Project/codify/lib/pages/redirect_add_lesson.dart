@@ -5,6 +5,8 @@ import "../user/user_lesson_service.dart";
 import '../services/auth.dart';
 import '../user/user_lesson.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:provider/provider.dart'; // Add this import
+import '../provider/lesson_provider.dart'; // Add this import
 
 class RedirectAddCourse extends StatefulWidget {
   const RedirectAddCourse({super.key});
@@ -28,34 +30,42 @@ class _AddCourseState extends State<RedirectAddCourse> {
   }
 
   Future<void> _fetchUserLessson() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
     try {
       final String? userId = await _auth.getUID();
       if (userId == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = "User is not logged in.";
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = "User is not logged in.";
+          });
+        }
         return;
       }
 
       final userLesson = await _userLessonService.getUserLessonByUserId(userId);
-      setState(() {
-        _userLesson = userLesson;
-        _isLoading = false;
-        _errorMessage = null;
-      });
+      if (mounted) {
+        setState(() {
+          _userLesson = userLesson;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Failed to load courses: ${e.toString()}";
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = "Failed to load courses: ${e.toString()}";
+          _isLoading = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorMessage ?? "Error fetching courses.")),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_errorMessage ?? "Error fetching courses.")),
+        );
+      }
     }
   }
 
@@ -64,9 +74,11 @@ class _AddCourseState extends State<RedirectAddCourse> {
       await _userLessonService.deleteUserLesson(documentId);
       _fetchUserLessson();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error deleting course: ${e.toString()}")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error deleting course: ${e.toString()}")),
+        );
+      }
     }
   }
 
@@ -102,7 +114,8 @@ class _AddCourseState extends State<RedirectAddCourse> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        title: const Text("Course", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+        title: const Text("Course",
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: const Color(0xFFFFFFFF),
       ),
@@ -116,14 +129,17 @@ class _AddCourseState extends State<RedirectAddCourse> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AddUserLesson()),
+                    MaterialPageRoute(
+                        builder: (context) => const AddUserLesson()),
                   ).then((value) => _fetchUserLessson());
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF58CC02),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -141,7 +157,8 @@ class _AddCourseState extends State<RedirectAddCourse> {
                     child: ListView.builder(
                       itemCount: 4,
                       itemBuilder: (context, index) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
                         child: Container(
                           width: double.infinity,
                           height: 50.0,
@@ -158,42 +175,47 @@ class _AddCourseState extends State<RedirectAddCourse> {
                   children: <Widget>[
                     if (_userLesson.isNotEmpty)
                       Expanded(
-
                         child: ListView.builder(
-
                           itemCount: _userLesson.length,
                           itemBuilder: (context, index) {
                             final lesson = _userLesson[index];
                             return Card(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-
                               ),
                               color: const Color(0xFFFFFFFF),
                               elevation: 5,
-                              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 16),
                               child: Column(
                                 children: [
                                   ListTile(
-
                                     title: Text(
-                                      lesson.userCategoryName ?? 'Unknown Lesson Name',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                      lesson.userCategoryName ??
+                                          'Unknown Lesson Name',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     trailing: IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _showDeleteConfirmationDialog(lesson.documentId),
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () =>
+                                          _showDeleteConfirmationDialog(
+                                              lesson.documentId),
                                     ),
                                   ),
-
                                 ],
                               ),
                             );
                           },
                         ),
                       ),
-                    if (_userLesson.isEmpty && !_isLoading && _errorMessage == null)
-                      const Text("No courses added yet", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                    if (_userLesson.isEmpty &&
+                        !_isLoading &&
+                        _errorMessage == null)
+                      const Text("No courses added yet",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.blue)),
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -204,17 +226,38 @@ class _AddCourseState extends State<RedirectAddCourse> {
                       ),
                     Spacer(),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const Home()),
-                        );
+                      onPressed: () async {
+                        // Make onPressed async
+                        // Get the provider instance
+                        final lessonProvider =
+                            Provider.of<LessonProvider>(context, listen: false);
+                        // Call refresh before navigating
+                        print(
+                            '[Debug] Calling lessonProvider.refresh() before navigation.'); // Debug
+                        await lessonProvider.refresh();
+                        print(
+                            '[Debug] lessonProvider.refresh() completed.'); // Debug
+                        // Now navigate
+                        if (mounted) {
+                          // Check mounted after await
+                          print('[Debug] Navigating to Home.'); // Debug
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Home()),
+                          );
+                        } else {
+                          print(
+                              '[Debug] Widget not mounted after refresh, cannot navigate.'); // Debug
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF58CC02),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 16),
+                        textStyle: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

@@ -20,9 +20,13 @@ import '../gamification/lives_service.dart';
 import '../gamification/lives.dart';
 
 class UserLessonContent extends StatefulWidget {
-  final String documentId;
+  final String documentId; // This is the lessonId
+  final String topicId; // Add topicId field
 
-  const UserLessonContent({super.key, required this.documentId});
+  const UserLessonContent(
+      {super.key,
+      required this.documentId,
+      required this.topicId}); // Update constructor
 
   @override
   State<UserLessonContent> createState() => _UserLessonContentState();
@@ -35,7 +39,7 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final LeaderboardService _leaderboardService = LeaderboardService();
   final StreakService _streakService = StreakService();
   final LivesService _livesService = LivesService();
-  bool _isSubmittingFinal=false;
+  bool _isSubmittingFinal = false;
 
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
@@ -68,7 +72,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
 
   Future<void> _fetchQuestions() async {
     try {
-      final questions = await _questionService.getQuestionsForLesson(widget.documentId);
+      final questions =
+          await _questionService.getQuestionsForLesson(widget.documentId);
       if (mounted) {
         setState(() {
           _questions = questions;
@@ -82,8 +87,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
       });
     }
   }
-  Future<void> _checkAnswer(int selectedOption) async {
 
+  Future<void> _checkAnswer(int selectedOption) async {
     setState(() {
       _totalAttempts++;
     });
@@ -101,7 +106,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
           _currentQuestionIndex++;
         });
       } else {
-
         setState(() {
           _isSubmittingFinal = true;
         });
@@ -116,15 +120,21 @@ class _UserLessonContentState extends State<UserLessonContent> {
               documentId: '',
             ));
 
-            await Provider.of<StreakProvider>(context, listen: false).updateStreak();
-            final userStatProvider = Provider.of<UserStatProvider>(context, listen: false);
+            await Provider.of<StreakProvider>(context, listen: false)
+                .updateStreak();
+            final userStatProvider =
+                Provider.of<UserStatProvider>(context, listen: false);
             await userStatProvider.markQuestionAsComplete(
                 user,
-                widget.documentId,
-                _questions[_currentQuestionIndex].documentId
-            );
+                widget
+                    .topicId, // Correct: Pass the topicId received by the widget
+                widget
+                    .documentId // Correct: Pass the lessonId (which is widget.documentId)
+                );
 
-            double accuracy = _totalAttempts > 0 ? (_correctAnswers / _totalAttempts) * 100.0 : 0.0;
+            double accuracy = _totalAttempts > 0
+                ? (_correctAnswers / _totalAttempts) * 100.0
+                : 0.0;
 
             // Hiding loading before navigation
             if (mounted) {
@@ -136,13 +146,12 @@ class _UserLessonContentState extends State<UserLessonContent> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => LessonCompletedPage(
-                        pointsEarned: lessonPoints,
-                        lessonId: widget.documentId,
-                        timeToComplete: DateTime.now().difference(_lessonStartTime),
-                        accuracy: accuracy,
-                      )
-                  )
-              );
+                            pointsEarned: lessonPoints,
+                            lessonId: widget.documentId,
+                            timeToComplete:
+                                DateTime.now().difference(_lessonStartTime),
+                            accuracy: accuracy,
+                          )));
             }
           } catch (e) {
             // Handling errors and reset loading state
@@ -158,7 +167,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
       }
     } else {
       if (_lives != null) {
-        final livesProvider = Provider.of<LivesProvider>(context, listen: false);
+        final livesProvider =
+            Provider.of<LivesProvider>(context, listen: false);
         livesProvider.decreaseLives();
         _lives = _livesService.getLives();
         if (livesProvider.lives?.currentLives == 0) {
@@ -209,7 +219,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('No Lives Left'),
-          content: const Text('You have run out of lives. Please wait for them to refill.'),
+          content: const Text(
+              'You have run out of lives. Please wait for them to refill.'),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
@@ -227,7 +238,9 @@ class _UserLessonContentState extends State<UserLessonContent> {
   @override
   Widget build(BuildContext context) {
     final livesProvider = Provider.of<LivesProvider>(context);
-    double progress = _questions.isNotEmpty ? (_currentQuestionIndex + 1) / _questions.length : 0.0;
+    double progress = _questions.isNotEmpty
+        ? (_currentQuestionIndex + 1) / _questions.length
+        : 0.0;
 
     // Building the main contain of the screen
     Widget mainContent = Scaffold(
@@ -249,7 +262,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 borderRadius: BorderRadius.circular(10),
                 backgroundColor: Colors.grey[300],
                 minHeight: 15,
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
               ),
             ),
             const SizedBox(width: 19),
@@ -257,7 +271,8 @@ class _UserLessonContentState extends State<UserLessonContent> {
               children: [
                 Text(
                   '${livesProvider.lives?.currentLives ?? 0}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 5),
                 const Icon(Icons.favorite, color: Colors.red),
@@ -270,96 +285,102 @@ class _UserLessonContentState extends State<UserLessonContent> {
       backgroundColor: const Color(0xFFFFFFFF),
       body: _isLoading
           ? Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: ListView.builder(
-          itemCount: 6,
-          itemBuilder: (context, index) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Container(
-              height: 100,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      )
-          : _questions.isEmpty
-          ? const Center(child: Text('No questions found'))
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _questions[_currentQuestionIndex].title,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: ListView.builder(
+                itemCount: 6,
+                itemBuilder: (context, index) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Container(
+                    height: 100,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _questions[_currentQuestionIndex].content,
-                    style: const TextStyle(fontSize: 18, color: Colors.black87),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Code Editor
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CodeTheme(
-                data: CodeThemeData(styles: monokaiSublimeTheme),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      CodeField(
-                          controller: CodeController(
-                            text: _questions[_currentQuestionIndex].questionText,
-                            language: python,
-                          ),
-                          gutterStyle: const GutterStyle(
-                            showLineNumbers: false,
-                          ),
-                          readOnly: true,
-                          textStyle: const TextStyle(fontSize: 16, fontFamily: 'RobotoMono')
-                      ),
-                    ]
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: _questions[_currentQuestionIndex].options.length,
-                itemBuilder: (context, index) {
-                  final option = _questions[_currentQuestionIndex].options[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(option, style: const TextStyle(fontSize: 16)),
-                      onTap: () => _checkAnswer(index),
-                      tileColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+            )
+          : _questions.isEmpty
+              ? const Center(child: Text('No questions found'))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _questions[_currentQuestionIndex].title,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _questions[_currentQuestionIndex].content,
+                              style: const TextStyle(
+                                  fontSize: 18, color: Colors.black87),
+                            ),
+                          ],
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+                      const SizedBox(height: 16),
+
+                      // Code Editor
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: CodeTheme(
+                          data: CodeThemeData(styles: monokaiSublimeTheme),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 8),
+                                CodeField(
+                                    controller: CodeController(
+                                      text: _questions[_currentQuestionIndex]
+                                          .questionText,
+                                      language: python,
+                                    ),
+                                    gutterStyle: const GutterStyle(
+                                      showLineNumbers: false,
+                                    ),
+                                    readOnly: true,
+                                    textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontFamily: 'RobotoMono')),
+                              ]),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount:
+                              _questions[_currentQuestionIndex].options.length,
+                          itemBuilder: (context, index) {
+                            final option = _questions[_currentQuestionIndex]
+                                .options[index];
+                            return Card(
+                              child: ListTile(
+                                title: Text(option,
+                                    style: const TextStyle(fontSize: 16)),
+                                onTap: () => _checkAnswer(index),
+                                tileColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
     );
 
     //Ui to indicate the completion of lesson
@@ -370,28 +391,27 @@ class _UserLessonContentState extends State<UserLessonContent> {
           Container(
             color: Colors.black54,
             child: Center(
-
-
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      CircularProgressIndicator(color: Color(0xFF1cb0f6),),
-                      SizedBox(height: 16),
-                      // Text(
-                      //   "Completing lesson...",
-                      //   style: TextStyle(
-                      //       fontSize: 16,
-                      //       fontWeight: FontWeight.bold
-                      //   ),
-                      // ),
-                    ],
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    CircularProgressIndicator(
+                      color: Color(0xFF1cb0f6),
+                    ),
+                    SizedBox(height: 16),
+                    // Text(
+                    //   "Completing lesson...",
+                    //   style: TextStyle(
+                    //       fontSize: 16,
+                    //       fontWeight: FontWeight.bold
+                    //   ),
+                    // ),
+                  ],
                 ),
               ),
             ),
-
+          ),
       ],
     );
   }

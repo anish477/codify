@@ -30,7 +30,6 @@ class LessonProvider extends ChangeNotifier {
   String? _selectedCategoryId;
   String? _userCategoryName;
   String? _questionId;
-  bool isTopicLessonsLoading = false;
 
   List<UserLesson> get userLessons => _userLessons;
   List<Topic> get topics => _topics;
@@ -44,8 +43,7 @@ class LessonProvider extends ChangeNotifier {
   String? get selectedTopicId => _selectedTopicId;
   String? get userCategoryName => _userCategoryName;
   String? get selectedCategoryId => _selectedCategoryId;
-  bool get isLoadingLessons => isTopicLessonsLoading;
-  static const String _selectedLessonKey = 'selectedLessonId';
+  static const String _selectedTopicKey = 'selectedTopicId';
   static const String _selectedCategoryKey = 'selectedCategoryId';
 
   LessonProvider({
@@ -59,23 +57,38 @@ class LessonProvider extends ChangeNotifier {
         _auth = auth ?? AuthService(),
         _topicService = topicService ?? TopicService(),
         _lessonService = lessonService ?? LessonService() {
-    _initialize();
+    loadData();
   }
 
-  Future<void> _initialize() async {
+  Future<void> loadData() async {
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
 
-    await Future.wait([
-      _initializeUserId(),
-      _fetchAllTopicsAndLessons(),
-    ]);
+    try {
+      await _initializeUserId();
+      if (_userId == null) {
+        _showError("User ID not available.");
+        return;
+      }
 
-    await _loadPersistedCategory();
-    await _selectInitialCategory();
+      await _loadPersistedCategory();
+      await _loadSelectedTopic();
 
-    isLoading = false;
-    notifyListeners();
+      await _fetchUserLessons();
+
+      await _selectInitialCategoryAndExpandTopic(); //
+    } catch (e, stackTrace) {
+      _showError(
+          "An unexpected error occurred during loading: ${e.toString()}");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refresh() async {
+    await loadData();
   }
 
   Future<void> _initializeUserId() async {
@@ -94,112 +107,94 @@ class LessonProvider extends ChangeNotifier {
     _selectedCategoryId = prefs.getString(_selectedCategoryKey);
   }
 
-  Future<void> _selectInitialCategory() async {
+  Future<void> _selectInitialCategoryAndExpandTopic() async {
     try {
-      await _fetchUserLessons();
+      String? initialCategoryId = _selectedCategoryId;
+      String? initialCategoryName;
 
-      if (_selectedCategoryId != null) {
-        String? initialCategoryName = _userLessons
-            .firstWhereOrNull((lesson) => lesson.userCategoryId == _selectedCategoryId)?.userCategoryName;
-
-        if (initialCategoryName == null){
-          _showError("Failed to find a category with the persisted ID: $_selectedCategoryId.");
-          return;
+      if (initialCategoryId != null) {
+        final userLessonForCategory = _userLessons.firstWhereOrNull(
+            (lesson) => lesson.userCategoryId == initialCategoryId);
+        if (userLessonForCategory != null) {
+          initialCategoryName = userLessonForCategory.userCategoryName;
+        } else {
+          initialCategoryId = null;
+          _selectedCategoryId = null;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(_selectedCategoryKey);
         }
+      }
 
-        _selectedCategoryName = initialCategoryName;
-        await _fetchTopics(_selectedCategoryId!);
-        print('Loaded persisted category: $_selectedCategoryName with ID: $_selectedCategoryId');
-      } else if (_userLessons.isNotEmpty && _userLessons[0].userCategoryName != null) {
-        String initialCategoryName = _userLessons[0].userCategoryName!;
-        String initialCategoryId = _userLessons[0].userCategoryId!;
-
-        _selectedCategoryName = initialCategoryName;
+      if (initialCategoryId == null && _userLessons.isNotEmpty) {
+        initialCategoryId = _userLessons[0].userCategoryId;
+        initialCategoryName = _userLessons[0].userCategoryName;
         _selectedCategoryId = initialCategoryId;
-        await _fetchTopics(initialCategoryId);
 
+        if (initialCategoryId != null) {
+          await _savePersistedCategory(initialCategoryId);
+        }
+      }
+
+      if (initialCategoryId != null) {
+        _selectedCategoryName = initialCategoryName;
+
+        await _fetchTopicsAndAllLessonsForCategory(initialCategoryId);
+
+        if (_selectedTopicId != null) {
+          final initiallySelectedTopic =
+              _topics.firstWhereOrNull((t) => t.documentId == _selectedTopicId);
+
+          if (initiallySelectedTopic != null &&
+              initiallySelectedTopic.categoryId == initialCategoryId) {
+            initiallySelectedTopic.isExpanded = true;
+
+            notifyListeners();
+          } else {
+            if (initiallySelectedTopic == null) {
+            } else {}
+            _selectedTopicId = null;
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove(_selectedTopicKey);
+          }
+        } else {}
       } else {
-        _showError("No categories available for the user.");
+        _topics = [];
+        _lessons = [];
       }
     } catch (e) {
       _showError("Failed to select initial category: ${e.toString()}");
-    }
+      _topics = [];
+      _lessons = [];
+    } finally {}
   }
 
   Future<void> _fetchUserLessons() async {
     try {
-      if (_userId == null) return;
-
-      final userLessons = await _userLessonService.getUserLessonByUserId(_userId!);
+      if (_userId == null) {
+        return;
+      }
+      final userLessons =
+          await _userLessonService.getUserLessonByUserId(_userId!);
       _userLessons = userLessons;
-      notifyListeners();
     } catch (e) {
       _showError("Failed to load user lessons: ${e.toString()}");
     }
   }
 
-  Future<void> _fetchTopics(String userCategoryId) async {
-    try {
-      final topics = await _topicService.getAllTopics();
-      for (var topic in topics) {
-        topic.isExpanded = false;
-      }
-      _topics = topics.where((topic) => topic.categoryId == userCategoryId).toList();
-      if (_topics.isNotEmpty) {
-        _selectedTopicId = _topics[0].documentId;
-      }
-      notifyListeners();
-    } catch (e) {
-      _showError("Failed to load topics: ${e.toString()}");
-    }
-  }
-
-  Future<void> _fetchLessons(String topicId) async {
-    isTopicLessonsLoading = true;
-    notifyListeners();
-
-    try {
-      print('Fetching lessons for topicId: $topicId');
-      final lessons = await _lessonService.getLessonsByTopicId(topicId);
-      _lessons = lessons;
-      print('Fetched lessons: ${lessons.length}');
-    } catch (e) {
-      _showError("Failed to load lessons: ${e.toString()}");
-    } finally {
-      isTopicLessonsLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadSelectedLesson() async {
+  Future<void> _loadSelectedTopic() async {
     final prefs = await SharedPreferences.getInstance();
-    final selectedLessonId = prefs.getString(_selectedLessonKey);
-    if (selectedLessonId != null) {
-      _selectedTopicId = selectedLessonId;
-      await _fetchLessons(selectedLessonId);
-    }
+    _selectedTopicId = prefs.getString(_selectedTopicKey);
   }
 
-  Future<void> selectTopic(String topicId) async {
-    if (_selectedTopicId == topicId && _lessons.isNotEmpty) {
-      print('Topic $topicId already selected and loaded');
-      return;
-    }
-    _selectedTopicId = topicId;
-    print('Selected topicId: $topicId');
-
-    await _fetchLessons(topicId);
-    await _saveSelectedLesson(topicId);
-  }
-
-  Future<void> _saveSelectedLesson(String topicId) async {
+  Future<void> _saveSelectedTopic(String topicId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_selectedLessonKey, topicId);
+    await prefs.setString(_selectedTopicKey, topicId);
   }
 
   void _showError(String message) {
     errorMessage = message;
-    print('Error: $message');
+    isLoading = false;
+
     notifyListeners();
   }
 
@@ -209,12 +204,28 @@ class LessonProvider extends ChangeNotifier {
   }
 
   void selectCategory(String? categoryName, String? categoryId) async {
+    if (_selectedCategoryId == categoryId) {
+      togglePanel();
+      return;
+    }
+
     _selectedCategoryName = categoryName;
     _selectedCategoryId = categoryId;
+    _selectedTopicId = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_selectedTopicKey);
 
     if (categoryId != null) {
+      isLoading = true;
+      notifyListeners();
       await _savePersistedCategory(categoryId);
-      await _fetchTopics(categoryId);
+
+      await _fetchTopicsAndAllLessonsForCategory(categoryId);
+      isLoading = false;
+    } else {
+      _topics = [];
+      _lessons = [];
+      notifyListeners();
     }
 
     togglePanel();
@@ -229,47 +240,90 @@ class LessonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _fetchAllTopicsAndLessons() async {
-    try {
-      final topics = await _topicService.getAllTopics();
-      for (var topic in topics) {
-        topic.isExpanded = false;
-      }
-      _topics = topics;
-      notifyListeners();
-    } catch (e) {
-      _showError("Failed to load topics: ${e.toString()}");
-    }
-  }
-
   Future<void> _savePersistedCategory(String categoryId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_selectedCategoryKey, categoryId);
   }
 
-  void toggleTopic(String topicId) {
-    for (var topic in _topics) {
-      if (topic.documentId == topicId) {
-        topic.isExpanded = !topic.isExpanded;
-      } else {
+  Future<void> _fetchTopicsAndAllLessonsForCategory(String categoryId) async {
+    try {
+      final topics = await _topicService.getAllTopics();
+
+      for (var topic in topics) {
         topic.isExpanded = false;
       }
-    }
+
+      _topics =
+          topics.where((topic) => topic.categoryId == categoryId).toList();
+
+      if (_topics.isNotEmpty) {
+        List<Future<List<Lesson>>> lessonFutures = _topics
+            .map(
+                (topic) => _lessonService.getLessonsByTopicId(topic.documentId))
+            .toList();
+
+        List<List<Lesson>> results = await Future.wait(lessonFutures);
+
+        _lessons = results.expand((list) => list).toList();
+      } else {
+        _lessons = [];
+      }
+    } catch (e) {
+      _showError(
+          "Failed to load topics and lessons for category $categoryId: ${e.toString()}");
+      _topics = [];
+      _lessons = [];
+    } finally {}
+
     notifyListeners();
   }
 
-  void reset() {
+  void toggleTopic(String topicId) {
+    Topic? toggledTopic;
+    bool needsNotify = false;
 
+    for (var topic in _topics) {
+      if (topic.documentId == topicId) {
+        if (!topic.isExpanded) {
+          topic.isExpanded = true;
+          toggledTopic = topic;
+          needsNotify = true;
+        } else {
+          topic.isExpanded = false;
+          needsNotify = true;
+
+          if (_selectedTopicId == topicId) {
+            _selectedTopicId = null;
+            SharedPreferences.getInstance()
+                .then((prefs) => prefs.remove(_selectedTopicKey));
+          }
+        }
+      } else {
+        if (topic.isExpanded) {
+          topic.isExpanded = false;
+          needsNotify = true;
+        }
+      }
+    }
+
+    if (toggledTopic != null && toggledTopic.isExpanded) {
+      _selectedTopicId = topicId;
+      _saveSelectedTopic(topicId);
+    }
+
+    if (needsNotify) {
+      notifyListeners();
+    }
+  }
+
+  void reset() {
     _userLessons = [];
     _topics = [];
     _lessons = [];
     _selectedCategories.clear();
 
-
     isLoading = true;
     isPanelOpen = false;
-    isTopicLessonsLoading = false;
-
 
     _selectedCategoryName = null;
     _userId = null;

@@ -38,79 +38,84 @@ class _AddUserLessonState extends State<AddUserLesson> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        title: const Text("Add Lesson",style: TextStyle(fontSize: 30,fontWeight: FontWeight.bold),),
+        title: const Text(
+          "Add Lesson",
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: const Color(0xFFFFFFFF),
-
       ),
       body: Container(
-
         child: isLoading
             ? Center(
-          child: Shimmer.fromColors(
-            highlightColor: Colors.grey,
-            baseColor: Colors.white,
-            child: ListView.builder(
-              itemCount: 6,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Container(
-                    height: 50.0,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                child: Shimmer.fromColors(
+                  highlightColor: Colors.grey,
+                  baseColor: Colors.white,
+                  child: ListView.builder(
+                    itemCount: 6,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        child: Container(
+                          height: 50.0,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-        )
-            : errorMessage != null
-            ? Center(
-          child: Text(
-            "Error: $errorMessage",
-            style: const TextStyle(color: Colors.red),
-          ),
-        )
-            : _categories.isEmpty
-            ? Center(
-          child: const Text(
-            "No more lessons to add", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
-          ),
-        )
-            : ListView.separated(
-          padding: const EdgeInsets.all(16.0),
-          itemCount: _categories.length,
-          itemBuilder: (context, index) {
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                
-              ),
-              color: const Color(0xFFFFFFFF),
-              elevation: 5,
-              child: ListTile(
-
-                title: Text(
-                  _categories[index].name,
-                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                onTap: () {
-                  setState(() {
-                    if (SelectedCatergory != _categories[index].name) {
-                      SelectedCatergory = _categories[index].name;
-                      SelectedDocumnetId = _categories[index].documentId;
-                    }
-                  });
-                  _addUserLesson();
-                },
-              ),
-            );
-          },
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
-        ),
+              )
+            : errorMessage != null
+                ? Center(
+                    child: Text(
+                      "Error: $errorMessage",
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  )
+                : _categories.isEmpty
+                    ? Center(
+                        child: const Text(
+                          "No more lessons to add",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.blue),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: _categories.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            color: const Color(0xFFFFFFFF),
+                            elevation: 5,
+                            child: ListTile(
+                              title: Text(
+                                _categories[index].name,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  if (SelectedCatergory !=
+                                      _categories[index].name) {
+                                    SelectedCatergory = _categories[index].name;
+                                    SelectedDocumnetId =
+                                        _categories[index].documentId;
+                                  }
+                                });
+                                _addUserLesson();
+                              },
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
+                      ),
       ),
     );
   }
@@ -119,26 +124,37 @@ class _AddUserLessonState extends State<AddUserLesson> {
     try {
       final categories = await _categoryService.getAllCategories();
       final String? userId = await _auth.getUID();
+      List<UserLesson> existingLessons = [];
       if (userId != null) {
-        final existingLessons = await _userLessonService.getUserLessonByUserId(userId);
-        _addedCategoryIds = existingLessons.map((lesson) => lesson.userCategoryId!).toList();
+        existingLessons =
+            await _userLessonService.getUserLessonByUserId(userId);
+        _addedCategoryIds =
+            existingLessons.map((lesson) => lesson.userCategoryId!).toList();
       }
-      setState(() {
-        _categories = categories.where((category) => !_addedCategoryIds.contains(category.documentId)).toList();
-        if (_categories.isNotEmpty && SelectedCatergory == null) {
-          SelectedCatergory = _categories[0].name;
-          SelectedDocumnetId = _categories[0].documentId;
-        }
-        isLoading = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _categories = categories
+              .where((category) =>
+                  !_addedCategoryIds.contains(category.documentId))
+              .toList();
+          if (_categories.isNotEmpty && SelectedCatergory == null) {
+            SelectedCatergory = _categories[0].name;
+            SelectedDocumnetId = _categories[0].documentId;
+          }
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        errorMessage = "Failed to load categories: ${e.toString()}";
-        isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage ?? "Error fetching categories")),
-      );
+      if (mounted) {
+        setState(() {
+          errorMessage = "Failed to load categories: ${e.toString()}";
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage ?? "Error fetching categories")),
+        );
+      }
     }
   }
 
@@ -177,15 +193,14 @@ class _AddUserLessonState extends State<AddUserLesson> {
       await _userLessonService.addUserLesson(userLesson);
       if (mounted) {
         Navigator.of(context).pop(true);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text("Lesson Added Successfully")),
-        // );
-        _fetchCategories();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error adding lesson: ${e.toString()}")),
-      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error adding lesson: ${e.toString()}")),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

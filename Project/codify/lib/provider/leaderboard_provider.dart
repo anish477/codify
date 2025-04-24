@@ -12,7 +12,7 @@ class LeaderboardProvider extends ChangeNotifier {
   String? _userId;
 
   Map<String, int> get userPoints => _userPoints;
-  Map<String, int> get userPointsForGraph => _userPoints; // Added getter
+  Map<String, int> get userPointsForGraph => _userPoints;
   int get totalWeeklyPoints => _totalWeeklyPoints;
   bool get wasPointsReset => _wasPointsReset;
 
@@ -38,7 +38,8 @@ class LeaderboardProvider extends ChangeNotifier {
 
   Future<void> getTotalPointsByUserPerDayLast7Days() async {
     if (_userId != null) {
-      final weeklyPointsData = await _leaderboardService.getWeeklyPointsWithReset(_userId!);
+      final weeklyPointsData =
+          await _leaderboardService.getWeeklyPointsWithReset(_userId!);
       _totalWeeklyPoints = weeklyPointsData['totalPoints'] ?? 0;
       _wasPointsReset = weeklyPointsData['wasReset'] ?? false;
       notifyListeners();
@@ -55,5 +56,4 @@ class LeaderboardProvider extends ChangeNotifier {
       _initializeLeaderboard();
     }
   }
-
 }

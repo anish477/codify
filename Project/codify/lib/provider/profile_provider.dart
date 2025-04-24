@@ -1,5 +1,5 @@
+// ProfileProvider
 import 'package:flutter/material.dart';
-
 import '../services/auth.dart';
 import '../user/user_service.dart';
 import '../user/user.dart';
@@ -20,9 +20,10 @@ class ProfileProvider with ChangeNotifier {
   }
 
   Future<void> fetchUserDetails() async {
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
+    if (!isLoading) {
+      isLoading = true;
+      errorMessage = null;
+    }
 
     final uid = await _authService.getUID();
     if (uid != null) {
@@ -30,14 +31,19 @@ class ProfileProvider with ChangeNotifier {
         final users = await _userService.getUserByUserId(uid);
         if (users.isNotEmpty) {
           userDetail = users.first;
+          errorMessage = null;
         } else {
-          errorMessage = "Invalid or empty user data received.";
+          userDetail = null;
+          errorMessage = "No user details found for UID: $uid";
+          print(errorMessage);
         }
       } catch (e) {
+        userDetail = null;
         errorMessage = 'Error fetching user details: $e';
         print(errorMessage);
       }
     } else {
+      userDetail = null;
       errorMessage = "User not logged in.";
     }
 
@@ -45,16 +51,39 @@ class ProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> markProfileComplete() async {
+    if (userDetail != null) {
+      final updatedUser = UserDetail(
+        documentId: userDetail!.documentId,
+        name: userDetail!.name,
+        age: userDetail!.age,
+        userId: userDetail!.userId,
+        fcmToken: userDetail!.fcmToken,
+        profileComplete: true,
+      );
+      try {
+        await _userService.updateUser(updatedUser);
+        userDetail = updatedUser;
+        notifyListeners();
+      } catch (e) {
+        errorMessage = 'Error marking profile as complete: $e';
+        print(errorMessage);
+      }
+    } else {
+      errorMessage = "User detail is null, cannot mark profile as complete";
+      print(errorMessage);
+    }
+  }
+
   void reset() {
     userDetail = null;
     fetchUserDetails();
   }
 
-  // Add this method to your ProfileProvider class
-  Future<void> refreshFcmToken() async {
-    if (userDetail != null) {
-      // final notificationService = NotificationService();
-      // await notificationService.refreshToken();
-    }
-  }
+  // Future<void> refreshFcmToken() async {
+  //   if (userDetail != null) {
+  //     // final notificationService = NotificationService();
+  //     // await notificationService.refreshToken();
+  //   }
+  // }
 }

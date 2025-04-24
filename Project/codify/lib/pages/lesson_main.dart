@@ -1,5 +1,5 @@
-
 import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -33,10 +33,34 @@ class _LessonMainState extends State<LessonMain> {
   Future<void> _loadData() async {
     _userId = await AuthService().getUID();
     if (_userId != null) {
-      setState(() => _loadingUser = false);
+      // Schedule the provider call after the first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          // Check if the widget is still mounted
+          Provider.of<UserStatProvider>(context, listen: false)
+              .getUserStats()
+              .then((_) {
+            if (mounted) {
+              // Check again after async operation
+              setState(() => _loadingUser = false);
+            }
+          }).catchError((error) {
+            // Handle potential errors during getUserStats
+            print("Error loading user stats: $error");
+            if (mounted) {
+              setState(
+                  () => _loadingUser = false); // Still stop loading on error
+            }
+          });
+        }
+      });
     } else {
       // Handle case when user Id could not be loaded
-      setState(() => _loadingUser = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _loadingUser = false);
+        }
+      });
     }
   }
 
@@ -45,7 +69,6 @@ class _LessonMainState extends State<LessonMain> {
     final lessonProvider = Provider.of<LessonProvider>(context);
     final livesProvider = Provider.of<LivesProvider>(context);
     final userStatProvider = Provider.of<UserStatProvider>(context);
-
 
     return Scaffold(
       appBar: AppBar(
@@ -63,13 +86,13 @@ class _LessonMainState extends State<LessonMain> {
       body: _loadingUser
           ? const Center(child: CircularProgressIndicator())
           : lessonProvider.loading
-          ? _buildLoadingUI()
-          : lessonProvider.error != null
-          ? _buildErrorUI(lessonProvider.error!)
-          : lessonProvider.userLessons.isEmpty
-          ? const Center(child: Text("No categories to display"))
-          : _buildTopicAndLessonList(
-          lessonProvider, livesProvider, userStatProvider),
+              ? _buildLoadingUI()
+              : lessonProvider.error != null
+                  ? _buildErrorUI(lessonProvider.error!)
+                  : lessonProvider.userLessons.isEmpty
+                      ? const Center(child: Text("No categories to display"))
+                      : _buildTopicAndLessonList(
+                          lessonProvider, livesProvider, userStatProvider),
     );
   }
 
@@ -147,8 +170,8 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildTopicAndLessonList(
-      LessonProvider lessonProvider, LivesProvider livesProvider, UserStatProvider userStatProvider) {
+  Widget _buildTopicAndLessonList(LessonProvider lessonProvider,
+      LivesProvider livesProvider, UserStatProvider userStatProvider) {
     if (lessonProvider.topics.isEmpty) {
       return const Center(child: Text("No topics available."));
     }
@@ -164,14 +187,16 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildTopicItem(BuildContext context, LessonProvider lessonProvider,
-      Topic topic, LivesProvider livesProvider, UserStatProvider userStatProvider) {
+  Widget _buildTopicItem(
+      BuildContext context,
+      LessonProvider lessonProvider,
+      Topic topic,
+      LivesProvider livesProvider,
+      UserStatProvider userStatProvider) {
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
+        // Only toggle the expansion state, don't fetch lessons here
         lessonProvider.toggleTopic(topic.documentId);
-        if (topic.isExpanded) {
-          await lessonProvider.selectTopic(topic.documentId);
-        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -184,10 +209,8 @@ class _LessonMainState extends State<LessonMain> {
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: topic.isExpanded
-                  ? lessonProvider.isLoadingLessons
-                  ? _buildLessonLoadingIndicator()
-                  : _buildLessonList(
-                  context, lessonProvider, topic, livesProvider, userStatProvider)
+                  ? _buildLessonList(context, lessonProvider, topic,
+                      livesProvider, userStatProvider)
                   : const SizedBox(),
             ),
           ],
@@ -196,16 +219,101 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildLessonLoadingIndicator() {
-    return Container(
-      height: 100,
-      alignment: Alignment.center,
-      child: const CircularProgressIndicator(),
+  final Map<String, _TopicColors> _topicColors = {
+    "Writing Code": _TopicColors(
+      headerColor: Color(0xFFFF8020),
+      lessonColor: Color(0xFFFFC300),
+    ),
+    "Memory & Variable": _TopicColors(
+      headerColor: Color(0xFF8549BA),
+      lessonColor: Color(0xFFA560E8),
+    ),
+    "Numerical Data": _TopicColors(
+      headerColor: Color(0xFFFA881B),
+      lessonColor: Color(0xFFFF9400),
+    ),
+
+    "default": _TopicColors(
+      headerColor: Color(0xFF7AC70C),
+      lessonColor: Color(0xFF8EE000),
+    ),
+
+    // "default" : _TopicColors(
+    //   headerColor: Color(0xFFD33131),
+    //   lessonColor: Color(0xFFe53B3B),
+    // ),
+    // "default" : _TopicColors(
+    //   headerColor: Color(0xFF4C4C4C),
+    //   lessonColor: Color(0xFF777777),
+    // ),
+  };
+
+  Widget _buildLessonList(
+      BuildContext context,
+      LessonProvider lessonProvider,
+      Topic topic,
+      LivesProvider livesProvider,
+      UserStatProvider userStatProvider) {
+    List<Lesson> lessons = lessonProvider.lessons
+        .where((lesson) => lesson.topicId == topic.documentId)
+        .toList();
+
+    if (lessons.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: const Text("No lessons available for this topic."),
+      );
+    }
+
+    final completedLessonIds = userStatProvider.questionIds;
+    final Map<String, bool> lessonLockStatus = {};
+
+    for (int i = 0; i < lessons.length; i++) {
+      final lesson = lessons[i];
+      if (i == 0) {
+        lessonLockStatus[lesson.documentId] = false;
+      } else {
+        final previousLessonId = lessons[i - 1].documentId;
+        lessonLockStatus[lesson.documentId] =
+            !completedLessonIds.contains(previousLessonId);
+      }
+    }
+
+    List<List<Lesson>> groupedLessons = _groupLessonsIntoRows(lessons, 3);
+    List<Widget> rowWidgets = [];
+
+    for (var lessonRow in groupedLessons) {
+      rowWidgets.add(
+        Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: lessonRow.asMap().entries.map((entry) {
+              int index = entry.key;
+              Lesson lesson = entry.value;
+              bool isLocked = lessonLockStatus[lesson.documentId] ?? true;
+              return _buildLessonItem(context, lesson, livesProvider,
+                  lessonRow.length, index, topic, isLocked, userStatProvider);
+            }).toList()),
+      );
+      rowWidgets.add(const SizedBox(height: 32));
+    }
+
+    return Column(
+      children: rowWidgets,
     );
   }
 
+  List<List<Lesson>> _groupLessonsIntoRows(List<Lesson> lessons, int rowSize) {
+    List<List<Lesson>> groupedLessons = [];
+    for (int i = 0; i < lessons.length; i += rowSize) {
+      int end = (i + rowSize < lessons.length) ? i + rowSize : lessons.length;
+      groupedLessons.add(lessons.sublist(i, end));
+    }
+    return groupedLessons;
+  }
+
   Widget _buildTopicHeader(Topic topic) {
-    final topicColors = _topicColors[topic.name] ?? _topicColors["default"]!; // Default if not found
+    final topicColors = _topicColors[topic.name] ??
+        _topicColors["default"]!; // Default if not found
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
@@ -229,7 +337,6 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-
   Widget _buildAnimatedArrow(Topic topic) {
     return AnimatedRotation(
       duration: const Duration(milliseconds: 300),
@@ -238,92 +345,80 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildLessonList(BuildContext context, LessonProvider lessonProvider,
-      Topic topic, LivesProvider livesProvider, UserStatProvider userStatProvider) {
-    List<Lesson> lessons = lessonProvider.lessons
-        .where((lesson) => lesson.topicId == topic.documentId)
-        .toList();
-    
-
-
-
-
-    if (lessons.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: const Text("No lessons available for this topic."),
-      );
-    }
-
-    List<List<Lesson>> groupedLessons = _groupLessonsIntoRows(lessons, 3);
-
-    List<Widget> rowWidgets = [];
-
-    for (var lessonRow in groupedLessons) {
-      rowWidgets.add(
-        Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: lessonRow.asMap().entries.map((entry) {
-              int index = entry.key;
-              Lesson lesson = entry.value;
-              return _buildLessonItem(
-                  context, lesson, livesProvider, lessonRow.length, index, topic);
-            }).toList()),
-      );
-      rowWidgets.add(const SizedBox(height: 32));
-    }
-
-    return Column(
-      children: rowWidgets,
-    );
-  }
-
-
-  List<List<Lesson>> _groupLessonsIntoRows(List<Lesson> lessons, int rowSize) {
-    List<List<Lesson>> groupedLessons = [];
-    for (int i = 0; i < lessons.length; i += rowSize) {
-      int end = (i + rowSize < lessons.length) ? i + rowSize : lessons.length;
-      groupedLessons.add(lessons.sublist(i, end));
-    }
-    return groupedLessons;
-  }
-
-  final Map<String, _TopicColors> _topicColors = {
-
-    "Writing Code" : _TopicColors(
-      headerColor: Color(0xFFFF8020),
-      lessonColor: Color(0xFFFFC300),
-    ),
-    "Memory & Variable" : _TopicColors(
-      headerColor: Color(0xFF8549BA),
-      lessonColor: Color(0xFFA560E8),
-    ),
-    "Numerical Data" : _TopicColors(
-      headerColor: Color(0xFFFA881B),
-      lessonColor: Color(0xFFFF9400),
-    ),
-
-    "default" : _TopicColors(
-      headerColor: Color(0xFF7AC70C),
-      lessonColor: Color(0xFF8EE000),
-    ),
-
-    // "default" : _TopicColors(
-    //   headerColor: Color(0xFFD33131),
-    //   lessonColor: Color(0xFFe53B3B),
-    // ),
-    // "default" : _TopicColors(
-    //   headerColor: Color(0xFF4C4C4C),
-    //   lessonColor: Color(0xFF777777),
-    // ),
-
-  };
-
-
-
-  Widget _buildLessonItem(BuildContext context, Lesson lesson, LivesProvider livesProvider, int rowLength, int index, Topic topic) {
+  Widget _buildLessonItem(
+      BuildContext context,
+      Lesson lesson,
+      LivesProvider livesProvider,
+      int rowLength,
+      int index,
+      Topic topic,
+      bool isLocked,
+      UserStatProvider userStatProvider) {
     final topicColors = _topicColors[topic.name] ?? _topicColors["default"]!;
-    final userState = Provider.of<UserStatProvider>(context);
+    final bool isCompleted =
+        userStatProvider.questionIds.contains(lesson.documentId);
+
+    Color iconColor;
+    IconData iconData;
+    VoidCallback? onTapCallback;
+
+    if (isLocked) {
+      iconColor = Colors.grey[400]!;
+      iconData = Icons.lock;
+      onTapCallback = () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Complete the previous lesson first!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      };
+    } else if (isCompleted) {
+      iconColor = Colors.grey;
+      iconData = Icons.check_circle;
+      onTapCallback = () async {
+        if (livesProvider.lives?.currentLives == 0) {
+          _showNoLivesDialog(context);
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserLessonContent(
+                  documentId: lesson.documentId, // lessonId
+                  topicId: topic.documentId // Pass topicId
+                  ),
+            ),
+          );
+          if (mounted && _userId != null) {
+            Provider.of<UserStatProvider>(context, listen: false)
+                .getUserStats();
+          }
+        }
+      };
+    } else {
+      iconColor = topicColors.lessonColor;
+      iconData = Icons.play_circle_fill;
+      onTapCallback = () async {
+        if (livesProvider.lives?.currentLives == 0) {
+          _showNoLivesDialog(context);
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserLessonContent(
+                  documentId: lesson.documentId, // lessonId
+                  topicId: topic.documentId // Pass topicId
+                  ),
+            ),
+          );
+          if (mounted && _userId != null) {
+            Provider.of<UserStatProvider>(context, listen: false)
+                .getUserStats();
+          }
+        }
+      };
+    }
+
     return Column(
       children: [
         const SizedBox(
@@ -332,68 +427,34 @@ class _LessonMainState extends State<LessonMain> {
         Stack(
           alignment: Alignment.center,
           children: [
-            _buildDirectionalArrow(rowLength, index),
-            if (userState.questionIds.contains(lesson.documentId))
-              _circleIcon(
-                Icons.play_circle_fill,
-                Colors.grey,
-                onTap: () async {
-                  if (livesProvider.lives?.currentLives == 0) {
-                    _showNoLivesDialog(context);
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            UserLessonContent(documentId: lesson.documentId),
-                      ),
-                    );
-                  }
-                },
-              )
-            else
-              _circleIcon(
-                Icons.play_circle_fill,
-                topicColors.lessonColor,
-                onTap: () async {
-                  if (livesProvider.lives?.currentLives == 0) {
-                    _showNoLivesDialog(context);
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            UserLessonContent(documentId: lesson.documentId),
-                      ),
-                    );
-                  }
-                },
-              ),
+            _buildDirectionalArrow(rowLength, index, isLocked),
+            _circleIcon(
+              iconData,
+              iconColor,
+              onTap: onTapCallback,
+            ),
           ],
         ),
         Text(
           lesson.questionName,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black),
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isLocked ? Colors.grey[600] : Colors.black),
         ),
       ],
     );
   }
 
-  Widget _buildDirectionalArrow(int rowLength, int index) {
+  Widget _buildDirectionalArrow(int rowLength, int index, bool nextIsLocked) {
     if (index == rowLength - 1) {
       return const SizedBox();
     }
-
     return Positioned(
         right: -20,
-        child: Icon(
-            Icons.arrow_forward_rounded,
-            color: Colors.grey[400],
-            size: 28
-        )
-    );
+        child: Icon(Icons.arrow_forward_rounded,
+            color: Colors.grey[400], size: 28));
   }
 
   // Circle Icon Widget
@@ -413,19 +474,47 @@ class _LessonMainState extends State<LessonMain> {
   }
 
   void _showNoLivesDialog(BuildContext context) {
+    final livesProvider = Provider.of<LivesProvider>(context, listen: false);
+    final notificationService = NotificationService();
+
+    DateTime? nextRefillTime = livesProvider.lives?.lastRefillTime;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('No Lives Left'),
-          content:
-          const Text('You have run out of lives. Please wait for them to refill.'),
+          content: const Text(
+              'You have run out of lives. We\'ll notify you when they refill.'),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+
+                if (nextRefillTime != null &&
+                    nextRefillTime.isAfter(DateTime.now())) {
+                  final notificationId =
+                      DateTime.now().millisecondsSinceEpoch.remainder(100000);
+
+                  try {
+                    await notificationService.scheduleLocalNotification(
+                      id: notificationId,
+                      title: 'Lives Refilled!',
+                      body: 'Your lives have refilled. Come back and learn!',
+                      scheduledDateTime: nextRefillTime,
+                      payload: 'lives_refilled',
+                    );
+                    print(
+                        'Scheduled lives refill notification for $nextRefillTime');
+                  } catch (e) {
+                    print("Error scheduling notification: $e");
+                  }
+                } else {
+                  print(
+                      "No valid future refill time available to schedule notification.");
+                }
               },
             ),
           ],
@@ -433,7 +522,6 @@ class _LessonMainState extends State<LessonMain> {
       },
     );
   }
-
 }
 
 class _TopicColors {
@@ -442,4 +530,3 @@ class _TopicColors {
 
   _TopicColors({required this.headerColor, required this.lessonColor});
 }
-

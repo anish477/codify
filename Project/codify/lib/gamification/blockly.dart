@@ -13,41 +13,50 @@ class WebViewApp extends StatefulWidget {
 }
 
 class _WebViewAppState extends State<WebViewApp> {
-  late final BlocklyEditor editor;
+  // final BlocklyOptions workspaceConfiguration = BlocklyOptions(
+  //   grid: const GridOptions(
+  //     spacing: 20,
+  //     length: 3,
+  //     colour: '#ccc',
+  //     snap: true,
+  //   ),
+  //   toolbox: ToolboxInfo.fromJson(initialToolboxJson),
+  // );
 
-  BlocklyOptions _getMobileOptimizedConfig() {
-    final bool isMobile = MediaQuery.of(context).size.width < 600;
-
-    // Create a new configuration instead of spreading the existing one
-    return BlocklyOptions.fromJson({
-      'grid': {
-        'spacing': 20,
-        'length': 3,
-        'colour': '#ccc',
-        'snap': true,
-      },
-      'toolbox': initialToolboxJson,
-      'collapse': null,
-      'comments': null,
-      'horizontalLayout': isMobile, // Enable horizontal layout on mobile
-      'zoom': {
-        'controls': true,
-        'wheel': true,
-        'startScale': isMobile ? 0.7 : 1.0, // Smaller scale on mobile
-        'maxScale': 3,
-        'minScale': 0.3,
-        'scaleSpeed': 1.2,
-      },
-      'scrollbars': {
-        'horizontal': true,
-        'vertical': true,
-        'horizontalGap': isMobile ? 25 : 10, // More space on mobile
-      },
-      'css': true,
-      'trashcan': true,
-      'sounds': false,
-    });
-  }
+  final BlocklyOptions workspaceConfiguration = BlocklyOptions.fromJson(const {
+    'grid': {
+      'spacing': 20,
+      'length': 3,
+      'colour': '#ccc',
+      'snap': true,
+    },
+    'toolbox': initialToolboxJson,
+    // null safety example
+    'collapse': null,
+    'comments': null,
+    'css': null,
+    'disable': null,
+    'horizontalLayout': null,
+    'maxBlocks': null,
+    'maxInstances': null,
+    'media': null,
+    'modalInputs': null,
+    'move': null,
+    'oneBasedIndex': null,
+    'readOnly': null,
+    'renderer': null,
+    'rendererOverrides': null,
+    'rtl': null,
+    'scrollbars': null,
+    'sounds': null,
+    'theme': null,
+    'toolboxPosition': null,
+    'trashcan': null,
+    'maxTrashcanContents': null,
+    'plugins': null,
+    'zoom': null,
+    'parentWorkspace': null,
+  });
 
   void onInject(BlocklyData data) {
     debugPrint('onInject: ${data.xml}\n${jsonEncode(data.json)}');
@@ -67,34 +76,16 @@ class _WebViewAppState extends State<WebViewApp> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 600;
-
     return Scaffold(
-      backgroundColor: Color(0xFFFFFFFF),
       body: SafeArea(
-        child: RepaintBoundary(
-          child: BlocklyEditorWidget(
-            workspaceConfiguration: _getMobileOptimizedConfig(),
-            initial: initialJson,
-            onInject: onInject,
-            onChange: onChange,
-            onDispose: onDispose,
-            style: '''
-            .blocklyToolboxDiv { 
-              min-width: ${isMobile ? '35%' : '24%'}; 
-            }
-            .blocklyTreeRow { 
-              min-height: ${isMobile ? '48px' : '32px'}; 
-              padding: ${isMobile ? '8px 4px' : '4px'}; 
-            }
-            .blocklyTreeLabel {
-              font-size: ${isMobile ? '16px' : '13px'};
-            }
-            .blocklyFlyoutBackground {
-              width: ${isMobile ? '100%' : 'auto'} !important;
-            }
-          ''',
-          ),
+        child: BlocklyEditorWidget(
+          workspaceConfiguration: workspaceConfiguration,
+          initial: initialJson,
+          onInject: onInject,
+          onChange: onChange,
+          onDispose: onDispose,
+          onError: onError,
+          style: '.wrapper-web {top:58px;}',
         ),
       ),
       appBar: AppBar(

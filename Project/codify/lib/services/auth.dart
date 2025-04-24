@@ -27,12 +27,14 @@ class AuthService {
       if (googleUser == null) {
         return null;
       }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
       print("Error during Google sign-in: $e");
@@ -40,41 +42,41 @@ class AuthService {
     }
   }
 
-  Future<Object?> createUserWithEmailAndPassword(String email, String password) async {
+  Future<Object?> createUserWithEmailAndPassword(
+      String email, String password) async {
     try {
       final UserCredential cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       return cred.user;
-    }on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         return 'The password provided is too weak.';
       } else if (e.code == 'email-already-in-use') {
-        return'The account already exists for that email.';
+        return 'The account already exists for that email.';
       }
-    }
-    catch (e) {
+    } catch (e) {
       print("Error during email/password sign-up: $e");
       return null;
     }
     return null;
   }
 
-  Future<Object?> loginUserWithEmailAndPassword(String email, String password) async {
+  Future<Object?> loginUserWithEmailAndPassword(
+      String email, String password) async {
     try {
       final UserCredential cred = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       return cred.user;
-    }on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         return 'No user found for that email.';
       } else if (e.code == 'wrong-password') {
         return 'Wrong password provided for that user.';
-      }
-      else{
+      } else {
         return 'Email or Password Invalid';
       }
     }
@@ -85,9 +87,8 @@ class AuthService {
     try {
       await FirebaseAuth.instance.signOut();
       print("User signed out successfully!");
-      Provider.of<ProviderResetService>(context, listen: false).resetAllProviders();
-
-
+      Provider.of<ProviderResetService>(context, listen: false)
+          .resetAllProviders();
     } catch (e) {
       print("Error signing out: $e");
     }
@@ -108,7 +109,8 @@ class AuthService {
     return '';
   }
 
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     try {
       final User? user = _auth.currentUser;
       if (user == null) {
@@ -121,7 +123,6 @@ class AuthService {
         throw 'User email is not available';
       }
 
-      // Re-authenticate the user with their current credentials
       final AuthCredential credential = EmailAuthProvider.credential(
         email: email,
         password: currentPassword,

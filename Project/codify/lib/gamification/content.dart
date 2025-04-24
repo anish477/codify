@@ -50,12 +50,12 @@ const Map<String, dynamic> initialToolboxJson = {
         {
           'kind': 'block',
           'blockxml':
-          '<block type="logic_compare"><field name="OP">EQ</field></block>',
+              '<block type="logic_compare"><field name="OP">EQ</field></block>',
         },
         {
           'kind': 'block',
           'blockxml':
-          '<block type="logic_operation"><field name="OP">AND</field></block>',
+              '<block type="logic_operation"><field name="OP">AND</field></block>',
         },
         {
           'kind': 'block',
@@ -64,7 +64,7 @@ const Map<String, dynamic> initialToolboxJson = {
         {
           'kind': 'block',
           'blockxml':
-          '<block type="logic_boolean"><field name="BOOL">TRUE</field></block>',
+              '<block type="logic_boolean"><field name="BOOL">TRUE</field></block>',
         },
         {
           'kind': 'block',
