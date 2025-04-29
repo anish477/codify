@@ -1,4 +1,7 @@
+import 'package:codify/provider/lesson_provider.dart';
+import 'package:codify/provider/profile_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../user/add_user_lesson.dart';
 import "../user/user_lesson_service.dart";
 import '../services/auth.dart';
@@ -23,7 +26,7 @@ class _AddCourseState extends State<AddCourse> {
   @override
   void initState() {
     super.initState();
-    _fetchUserLessson();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchUserLessson());
   }
 
   Future<void> _fetchUserLessson() async {
@@ -98,10 +101,12 @@ class _AddCourseState extends State<AddCourse> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProfileProvider>();
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        title: const Text("Course", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+        title: const Text("Course",
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: const Color(0xFFFFFFFF),
       ),
@@ -115,14 +120,17 @@ class _AddCourseState extends State<AddCourse> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AddUserLesson()),
+                    MaterialPageRoute(
+                        builder: (context) => const AddUserLesson()),
                   ).then((value) => _fetchUserLessson());
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF58CC02),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -140,7 +148,8 @@ class _AddCourseState extends State<AddCourse> {
                     child: ListView.builder(
                       itemCount: 4,
                       itemBuilder: (context, index) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
                         child: Container(
                           width: double.infinity,
                           height: 50.0,
@@ -157,42 +166,47 @@ class _AddCourseState extends State<AddCourse> {
                   children: <Widget>[
                     if (_userLesson.isNotEmpty)
                       Expanded(
-
                         child: ListView.builder(
-
                           itemCount: _userLesson.length,
                           itemBuilder: (context, index) {
                             final lesson = _userLesson[index];
                             return Card(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-
                               ),
                               color: const Color(0xFFFFFFFF),
                               elevation: 5,
-                              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 16),
                               child: Column(
                                 children: [
                                   ListTile(
-
                                     title: Text(
-                                      lesson.userCategoryName ?? 'Unknown Lesson Name',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                      lesson.userCategoryName ??
+                                          'Unknown Lesson Name',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     trailing: IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _showDeleteConfirmationDialog(lesson.documentId),
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () =>
+                                          _showDeleteConfirmationDialog(
+                                              lesson.documentId),
                                     ),
                                   ),
-
                                 ],
                               ),
                             );
                           },
                         ),
                       ),
-                    if (_userLesson.isEmpty && !_isLoading && _errorMessage == null)
-                      const Text("No courses added yet", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                    if (_userLesson.isEmpty &&
+                        !_isLoading &&
+                        _errorMessage == null)
+                      const Text("No courses added yet",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.blue)),
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.all(8.0),

@@ -3,8 +3,8 @@ import 'package:intl/intl.dart';
 import 'leaderboard.dart';
 
 class LeaderboardService {
-
-  final CollectionReference _leaderboardCollection =FirebaseFirestore.instance.collection('leaderboard');
+  final CollectionReference _leaderboardCollection =
+      FirebaseFirestore.instance.collection('leaderboard');
 
   Future<void> addLeaderboardEntry(Leaderboard leaderboard) async {
     await _leaderboardCollection.add(leaderboard.toMap());
@@ -23,39 +23,38 @@ class LeaderboardService {
   Future<List<Leaderboard>> getAllFromLeaderboard() async {
     try {
       final querySnapshot = await _leaderboardCollection.get();
-      return querySnapshot.docs.map((doc) => Leaderboard.fromFirestore(doc)).toList();
+      return querySnapshot.docs
+          .map((doc) => Leaderboard.fromFirestore(doc))
+          .toList();
     } catch (e) {
       print('Error message $e');
       return [];
     }
   }
+
   Future<Map<String, int>> getUserPointsByDay(String userId) async {
     Map<String, int> dailyPoints = {};
     try {
-      // Get current date
       final now = DateTime.now();
       // Calculate date 7 days ago
       final sevenDaysAgo = now.subtract(const Duration(days: 7));
 
-      // Query points for this user in the last 7 days
       final pointsRef = FirebaseFirestore.instance.collection('leaderboard');
       final querySnapshot = await pointsRef
           .where('userId', isEqualTo: userId)
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
+          .where('timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
           .orderBy('timestamp')
           .get();
 
-      // Group points by day
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         final timestamp = data['timestamp'] as Timestamp;
         final points = data['points'] as int;
 
-        // Format date to YYYY-MM-DD
         final date = timestamp.toDate();
         final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
-        // Add points to the appropriate day
         if (dailyPoints.containsKey(dateStr)) {
           dailyPoints[dateStr] = dailyPoints[dateStr]! + points;
         } else {
@@ -63,7 +62,6 @@ class LeaderboardService {
         }
       }
 
-      // Fill in missing days with zero points
       for (int i = 6; i >= 0; i--) {
         final date = DateTime.now().subtract(Duration(days: i));
         final dateStr = DateFormat('yyyy-MM-dd').format(date);
@@ -95,20 +93,13 @@ class LeaderboardService {
     return userPoints;
   }
 
-
   Future<Map<String, dynamic>> getWeeklyPointsWithReset(String userId) async {
-
     bool wasReset = await _checkAndResetWeeklyPoints(userId);
-
 
     int totalPoints = await _getTotalPointsForPast7Days(userId);
 
-    return {
-      'totalPoints': totalPoints,
-      'wasReset': wasReset
-    };
+    return {'totalPoints': totalPoints, 'wasReset': wasReset};
   }
-
 
   Future<int> _getTotalPointsForPast7Days(String userId) async {
     DateTime sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
@@ -129,30 +120,27 @@ class LeaderboardService {
     return totalPoints;
   }
 
-
   Future<bool> _checkAndResetWeeklyPoints(String userId) async {
-
-    DocumentReference resetRef = FirebaseFirestore.instance.collection('pointsResetTracker').doc(userId);
-
-
+    DocumentReference resetRef =
+        FirebaseFirestore.instance.collection('pointsResetTracker').doc(userId);
     DocumentSnapshot resetDoc = await resetRef.get();
     DateTime now = DateTime.now();
 
     if (!resetDoc.exists) {
-
-      await resetRef.set({
-        'lastResetDate': now,
-        'userId': userId
-      });
+      await resetRef.set({'lastResetDate': now, 'userId': userId});
       return false;
     } else {
-
       Map<String, dynamic> data = resetDoc.data() as Map<String, dynamic>;
       DateTime lastReset = (data['lastResetDate'] as Timestamp).toDate();
-      Duration difference = now.difference(lastReset);
 
-      if (difference.inDays >= 7) {
+      int daysSinceLastSunday = now.weekday % 7;
+      DateTime mostRecentSunday = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: daysSinceLastSunday));
 
+      DateTime lastResetDateOnly =
+          DateTime(lastReset.year, lastReset.month, lastReset.day);
+
+      if (lastResetDateOnly.isBefore(mostRecentSunday)) {
         await resetRef.update({'lastResetDate': now});
         return true;
       }
@@ -160,5 +148,4 @@ class LeaderboardService {
       return false;
     }
   }
-
 }

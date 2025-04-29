@@ -88,7 +88,8 @@ class _LoginState extends State<Login> {
                       setState(() {
                         isLoading = true;
                       });
-                      final user = await _auth.loginUserWithEmailAndPassword(email, password);
+                      final user = await _auth.loginUserWithEmailAndPassword(
+                          email, password);
                       if (user == null) {
                         setState(() {
                           error = 'Could not sign in with those credentials';

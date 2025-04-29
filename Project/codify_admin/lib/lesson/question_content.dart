@@ -25,7 +25,8 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
   }
 
   Future<void> _fetchQuestions() async {
-    List<Question> questions = await _questionService.getQuestionsForLesson(widget.lessonId);
+    List<Question> questions =
+        await _questionService.getQuestionsForLesson(widget.lessonId);
     setState(() {
       _questions = questions;
     });
@@ -40,7 +41,8 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
     if (updatedQuestion != null) {
       setState(() {
-        final index = _questions.indexWhere((q) => q.documentId == updatedQuestion.documentId);
+        final index = _questions
+            .indexWhere((q) => q.documentId == updatedQuestion.documentId);
         if (index != -1) {
           _questions[index] = updatedQuestion;
         }
@@ -86,52 +88,77 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Questions'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
-      body: ListView.separated(
-        itemCount: _questions.length,
-        itemBuilder: (context, index) {
-          Question question = _questions[index];
-          return Container(
-            color: Colors.grey[200],
-            child: ListTile(
-              title: Text(question.title),
-              subtitle: Text(question.questionText),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuestionDetailScreen(documentId: question.documentId),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView.separated(
+          itemCount: _questions.length,
+          itemBuilder: (context, index) {
+            Question question = _questions[index];
+            return Container(
+              color: Colors.grey[200],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ListTile(
+                  title: Text(question.title),
+                  subtitle: Text(question.questionText),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QuestionDetailScreen(
+                            documentId: question.documentId),
+                      ),
+                    );
+                  },
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit,
+                          color: Colors.blueAccent,
+                        ),
+                        onPressed: () => _editQuestion(question),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () =>
+                            _confirmDeleteQuestion(question.documentId),
+                      ),
+                    ],
                   ),
-                );
-              },
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () => _editQuestion(question),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => _confirmDeleteQuestion(question.documentId),
-                  ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
-        separatorBuilder: (context, index) => const SizedBox(height: 8),
+            );
+          },
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFFFFFFF),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddQuestionScreen(lessonId: widget.lessonId),
+              builder: (context) =>
+                  AddQuestionScreen(lessonId: widget.lessonId),
             ),
           ).then((_) => _fetchQuestions());
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.blueAccent),
       ),
     );
   }

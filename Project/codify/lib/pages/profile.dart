@@ -1,262 +1,213 @@
-import 'dart:async';
-
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:codify/pages/add_course.dart';
+import 'package:codify/pages/add_profile.dart';
+import 'package:codify/pages/change_password.dart';
 import 'package:codify/provider/streak_provider.dart';
-import 'package:codify/user/user.dart';
+import 'package:codify/provider/lesson_provider.dart';
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:codify/services/upload_image.dart';
-import 'package:codify/pages/setting.dart';
-import 'package:codify/user/user_service.dart';
-import 'package:codify/services/auth.dart';
+
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import '../provider/leaderboard_provider.dart';
-import '../user/image.dart';
-import '../user/image_service.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:codify/gamification/leaderboard_service.dart';
 import 'package:intl/intl.dart';
 
 import '../widget/fullScreenImage.dart';
+import 'package:codify/provider/profile_provider.dart';
 
-class Profile extends StatefulWidget {
-  const Profile({super.key});
-
-  @override
-  State<Profile> createState() => _ProfileState();
-}
-
-class _ProfileState extends State<Profile> {
-  final ImagePicker _picker = ImagePicker();
-  final UserService _userService = UserService();
-  final UploadImageService _uploadImageService = UploadImageService();
-  final AuthService _auth = AuthService();
-  final ImageService _imageService = ImageService();
-  final LeaderboardService _leaderboardService = LeaderboardService();
-
-  bool _isUploading = false;
-  bool _isLoading = false;
-  List<ImageModel> images = [];
-  UserDetail? _user;
-  bool _graphDataLoaded = false;
-  Map<String, int> _userDailyPoints = {};
-
-  StreamSubscription? _userStreamSubscription;
-
-  Future<void> _pickAndUploadImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
-      setState(() {
-        _isUploading = true;
-      });
-      final imageUrl = await _uploadImageService.uploadImage(context, image);
-
-      if (imageUrl != null) {
-        if (!mounted) return;
-        if (images.isNotEmpty) {
-          await _updateImage(images.first.documentId, imageUrl);
-        } else {
-          await _addImage(imageUrl);
-        }
-        await _fetchData();
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to Upload Image.")));
-        setState(() {
-          _isUploading = false;
-        });
-      }
-    } else {
-      setState(() {
-        _isUploading = false;
-      });
-    }
-  }
-
-  Future<void> _fetchData() async {
-    if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-      _graphDataLoaded = false; // Reset the flag
-    });
-
-    try {
-      await _fetchUserImage();
-      await _fetchUserData();
-      await _fetchUserPoints();
-    } catch (e) {
-      print("Error fetching user data: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Failed to fetch user data. Please try again later.')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _fetchUserImage() async {
-    final String? userId = await _auth.getUID();
-    if (userId != null) {
-      final fetchedImage = await _imageService.getImageByUserId(userId);
-      if (mounted) {
-        setState(() {
-          images = fetchedImage;
-        });
-      }
-    }
-  }
-
-  Future<void> _fetchUserData() async {
-    final String? userId = await _auth.getUID();
-    if (userId != null) {
-      // Cancel any previous subscription:
-      _userStreamSubscription?.cancel();
-
-      // Subscribe to the stream and store the subscription:
-      _userStreamSubscription = _userService.getUserStreamByUserId(userId).listen((users) {
-        if (users.isNotEmpty && mounted) {
-          setState(() {
-            _user = users.first;
-          });
-        }
-      });
-    }
-  }
-
-  Future<void> _fetchUserPoints() async {
-    final provider = Provider.of<LeaderboardProvider>(context, listen: false);
-    await provider.getTotalPointsByUserPerDayLast7Days();
-
-    // Fetch daily points data for current user
-    final String? userId = await _auth.getUID();
-    if (userId != null) {
-      _userDailyPoints = await _leaderboardService.getUserPointsByDay(userId);
-      print("user point$_userDailyPoints");
-    }
-
-    setState(() {
-      _graphDataLoaded = true;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchData();
-  }
-
-  @override
-  void dispose() {
-    _userStreamSubscription?.cancel();
-    super.dispose();
-  }
+class Profile extends StatelessWidget {
+  const Profile({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFFFFFFF),
-      appBar: AppBar(
-        title: const Text("Profile"),
-        backgroundColor: Color(0xFFFFFFFF),
-        shadowColor: Colors.black.withOpacity(0.5),
-        actions: [
-          GestureDetector(
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Setting()),
-              );
-              _fetchData();
-            },
-            child: const Padding(
-              padding: EdgeInsets.all(8),
-              child: Icon(Icons.settings),
+    final provider = context.watch<ProfileProvider>();
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text('Profile'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: provider.isLoading
+            ? _buildShimmerProfile(context)
+            : NotificationListener<OverscrollIndicatorNotification>(
+                onNotification: (overscroll) {
+                  overscroll.disallowIndicator();
+                  return true;
+                },
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: provider.user != null
+                      ? _buildProfileContent(provider, context)
+                      : const Center(
+                          child: Text('No user data available'),
+                        ),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(ProfileProvider provider, BuildContext context) {
+    final streak = Provider.of<StreakProvider>(context).streak;
+
+    final lessonProv = Provider.of<LessonProvider>(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildAvatar(provider, context),
+          const SizedBox(height: 20),
+          Text(
+            provider.user!.name,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Age: ${provider.user!.age}',
+            style: const TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: 20),
+          Text('Current Streak: ${streak?.currentStreak ?? 0} Days',
+              style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Column(
+                children: [
+                  const Text('Longest Streak', style: TextStyle(fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text('${streak?.longestStreak ?? 0} Days',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Column(
+                children: [
+                  const Text('Courses Enrolled',
+                      style: TextStyle(fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text('${lessonProv.userLessons.length}',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildTrendGraph(provider),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey, width: 2),
+                  ),
+                  child: ListTile(
+                    leading: Icon(Icons.person, color: Colors.green),
+                    title: const Text("Profile"),
+                    trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AddProfile()));
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey, width: 2)),
+                  child: ListTile(
+                    leading: Icon(Icons.book, color: Colors.blue),
+                    title: const Text("Course"),
+                    trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => AddCourse()));
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey, width: 2)),
+                  child: ListTile(
+                    leading: Icon(Icons.password, color: Colors.blue),
+                    title: const Text("Change Password"),
+                    trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ChangePassword()));
+                    },
+                  ),
+                ),
+                const SizedBox(height: 50),
+                Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      provider.signOut(context);
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(40, 50),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      textStyle: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text("Logout"),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: const CircularProgressIndicator())
-          : _user != null
-          ? _buildProfileContent(context)
-          : const Center(child: Text('No user data available')),
     );
   }
 
-  Widget _buildProfileContent(BuildContext context) {
-    final streak = Provider.of<StreakProvider>(context).streak;
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _buildAvatar(),
-              const SizedBox(height: 20),
-              _buildUserInfo(_user!),
-              const SizedBox(height: 20),
-              const SizedBox(height: 20),
-              Text("${streak?.currentStreak} Days", style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 20),
-              _buildTrendGraph(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _updateImage(String documentId, String newImageUrl) async {
-    try {
-      await _imageService.updateImage(documentId, {'image': newImageUrl});
-      await _fetchUserImage();
-    } catch (e) {
-      print("Error updating image: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to update image.")));
-      }
-    }
-  }
-
-  Future<void> _addImage(String imageUrl) async {
-    final String? userId = await _auth.getUID();
-
-    final imageData = ImageModel(
-      documentId: "",
-      image: imageUrl,
-      userId: userId,
-    );
-
-    await _imageService.addImage(imageData);
-  }
-
-  Widget _buildAvatar() {
-    String imageUrl = images.isNotEmpty
-        ? images.first.image
-        : "https://cdn-icons-png.flaticon.com/512/3177/3177283.png";
+  Widget _buildAvatar(ProfileProvider provider, BuildContext context) {
+    final imageUrl = provider.images.isNotEmpty
+        ? provider.images.first.image
+        : 'https://cdn-icons-png.flaticon.com/512/3177/3177283.png';
     return Stack(
       alignment: Alignment.center,
       children: [
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FullScreenImage(imageUrl: imageUrl),
-              ),
-            );
-          },
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FullScreenImage(imageUrl: imageUrl),
+            ),
+          ),
           child: Hero(
             tag: 'profileImage',
             child: CircleAvatar(
@@ -268,20 +219,14 @@ class _ProfileState extends State<Profile> {
                   fit: BoxFit.fill,
                   height: 120,
                   width: 120,
-                  placeholder: (context, url) => Shimmer.fromColors(
+                  placeholder: (c, u) => Shimmer.fromColors(
                     baseColor: Colors.grey[300]!,
                     highlightColor: Colors.grey[100]!,
-                    child: Container(
-                      width: 120.0,
-                      height: 120.0,
-                      color: Colors.white,
-                    ),
+                    child:
+                        Container(width: 120, height: 120, color: Colors.white),
                   ),
-                  errorWidget: (context, url, error) => const Icon(
-                    Icons.error,
-                    color: Colors.red,
-                    size: 120.0,
-                  ),
+                  errorWidget: (c, u, e) =>
+                      const Icon(Icons.error, color: Colors.red, size: 120),
                 ),
               ),
             ),
@@ -291,110 +236,93 @@ class _ProfileState extends State<Profile> {
           top: -7,
           right: 0,
           child: IconButton(
-            onPressed: _pickAndUploadImage,
-            icon: Icon(Icons.edit, color: Colors.blue, size: 30),
+            onPressed: () => provider.pickAndUploadImage(context),
+            icon: const Icon(Icons.edit, color: Colors.blue, size: 30),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildUserInfo(UserDetail user) {
-    return Column(
-      children: [
-        Text(
-          user.name,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          "Age: ${user.age}",
-          style: const TextStyle(fontSize: 18),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrendGraph() {
+  Widget _buildTrendGraph(ProfileProvider provider) {
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3)),
         ],
       ),
-      child: _graphDataLoaded ? SfCartesianChart(
-        title: ChartTitle(text: 'XP Trend'),
-        primaryXAxis: DateTimeAxis(
-          dateFormat: DateFormat.MMMd(),
-          intervalType: DateTimeIntervalType.days,
-          interval: 1,
-          majorGridLines: const MajorGridLines(width: 0),
-          axisLine: const AxisLine(width: 0),
-        ),
-        primaryYAxis: NumericAxis(
-          title: AxisTitle(text: 'XP'),
-          axisLine: const AxisLine(width: 0),
-          majorGridLines: const MajorGridLines(width: 1),
-        ),
-        series: <CartesianSeries>[
-          LineSeries<ChartData, DateTime>(
-            dataSource: _prepareChartData(),
-            xValueMapper: (ChartData data, _) => data.date,
-            yValueMapper: (ChartData data, _) => data.points,
-            color: Colors.blueAccent,
-            width: 3,
-            markerSettings: const MarkerSettings(
-              isVisible: true,
-              height: 8,
-              width: 8,
-              color: Colors.blue,
-            ),
-          )
-        ],
-        plotAreaBorderWidth: 0,
-      ) : Center(child: CircularProgressIndicator()),
+      child: provider.graphDataLoaded
+          ? SfCartesianChart(
+              title: ChartTitle(text: 'XP Trend'),
+              primaryXAxis: DateTimeAxis(
+                dateFormat: DateFormat.MMMd(),
+                intervalType: DateTimeIntervalType.days,
+                interval: 1,
+                majorGridLines: const MajorGridLines(width: 0),
+                axisLine: const AxisLine(width: 0),
+              ),
+              primaryYAxis: NumericAxis(
+                title: AxisTitle(text: 'XP'),
+                axisLine: const AxisLine(width: 0),
+                majorGridLines: const MajorGridLines(width: 1),
+              ),
+              series: <CartesianSeries>[
+                LineSeries<ChartData, DateTime>(
+                  dataSource: provider.chartData,
+                  xValueMapper: (d, _) => d.date,
+                  yValueMapper: (d, _) => d.points,
+                  color: Colors.blueAccent,
+                  width: 3,
+                  markerSettings: const MarkerSettings(
+                      isVisible: true, height: 8, width: 8, color: Colors.blue),
+                ),
+              ],
+              plotAreaBorderWidth: 0,
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 
-  List<ChartData> _prepareChartData() {
-    List<ChartData> chartData = [];
-
-    if (_userDailyPoints.isNotEmpty) {
-      // Convert map entries to chart data points
-      _userDailyPoints.forEach((dateStr, points) {
-        try {
-          DateTime date = DateTime.parse(dateStr);
-          chartData.add(ChartData(date, points));
-        } catch (e) {
-          print('Error parsing date: $dateStr - $e');
-        }
-      });
-
-      // Sort chart data by date
-      chartData.sort((a, b) => a.date.compareTo(b.date));
-    } else {
-      // Fallback for empty data
-      DateTime now = DateTime.now();
-      for (int i = 6; i >= 0; i--) {
-        DateTime date = now.subtract(Duration(days: i));
-        chartData.add(ChartData(date, 0));
-      }
-    }
-
-    return chartData;
+  Widget _buildShimmerProfile(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(width: 150, height: 20, color: Colors.white),
+            const SizedBox(height: 10),
+            Container(width: 100, height: 16, color: Colors.white),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(width: 80, height: 16, color: Colors.white),
+                Container(width: 80, height: 16, color: Colors.white),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(height: 200, width: double.infinity, color: Colors.white),
+          ],
+        ),
+      ),
+    );
   }
-}
-
-class ChartData {
-  ChartData(this.date, this.points);
-  final DateTime date;
-  final int points;
 }

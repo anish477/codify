@@ -30,8 +30,8 @@ class AuthWrapper extends StatelessWidget {
           return const Login();
         }
 
-        final isProfileMissing = profileProvider.userDetail?.age == null ||
-            profileProvider.userDetail?.name == null;
+        final isProfileMissing = profileProvider.user?.age == null ||
+            profileProvider.user?.name == null;
 
         if (isProfileMissing) {
           if (profileProvider.isLoading) {

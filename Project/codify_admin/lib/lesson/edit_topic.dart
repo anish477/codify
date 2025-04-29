@@ -22,7 +22,6 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.topic.name);
     _indexController.text = widget.topic.index;
-
   }
 
   @override
@@ -47,6 +46,7 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF),
         title: const Text('Edit Topic'),
       ),
       body: Padding(
@@ -77,6 +77,10 @@ class _EditTopicScreenState extends State<EditTopicScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: _updateTopic,
                 child: const Text('Update Topic'),
               ),

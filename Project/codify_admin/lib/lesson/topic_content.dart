@@ -54,7 +54,8 @@ class _TopicContentState extends State<TopicContent> {
 
     if (updatedLesson != null) {
       setState(() {
-        final index = _lessons.indexWhere((l) => l.documentId == updatedLesson.documentId);
+        final index = _lessons
+            .indexWhere((l) => l.documentId == updatedLesson.documentId);
         if (index != -1) {
           _lessons[index] = updatedLesson;
         }
@@ -74,6 +75,7 @@ class _TopicContentState extends State<TopicContent> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text('Delete Lesson'),
           content: const Text('Are you sure you want to delete this lesson?'),
           actions: [
@@ -98,45 +100,87 @@ class _TopicContentState extends State<TopicContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
+        backgroundColor: Color(0xFFFFFFFF),
         title: const Text('Topic Content'),
       ),
-      body: ListView.separated(
-        itemCount: _lessons.length,
-        itemBuilder: (context, index) {
-          return Container(
-            color: Colors.grey[200],
-            child: ListTile(
-              title: Text(_lessons[index].questionName),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuestionListScreen(lessonId: _lessons[index].documentId),
-                  ),
-                );
-              },
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit),
-                    onPressed: () => _editLesson(_lessons[index]),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => _confirmDeleteLesson(_lessons[index].documentId),
-                  ),
-                ],
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFFFFFFFFF),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 5,
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
-          );
-        },
-        separatorBuilder: (context, index) => const SizedBox(height: 8),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListView.separated(
+            itemCount: _lessons.length,
+            itemBuilder: (context, index) {
+              return Container(
+                color: Colors.grey[200],
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.3),
+                        spreadRadius: 5,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    title: Text(_lessons[index].questionName),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuestionListScreen(
+                              lessonId: _lessons[index].documentId),
+                        ),
+                      );
+                    },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.edit,
+                            color: Colors.blueAccent,
+                          ),
+                          onPressed: () => _editLesson(_lessons[index]),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                            color: Colors.redAccent,
+                          ),
+                          onPressed: () =>
+                              _confirmDeleteLesson(_lessons[index].documentId),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFFFFFFF),
         onPressed: _addLesson,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.blue),
       ),
     );
   }

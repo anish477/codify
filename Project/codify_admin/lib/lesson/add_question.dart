@@ -3,7 +3,7 @@ import 'question.dart';
 import 'question_service.dart';
 
 class AddQuestionScreen extends StatefulWidget {
-  final String lessonId; // Lesson ID to associate the question with
+  final String lessonId;
 
   const AddQuestionScreen({super.key, required this.lessonId});
 
@@ -47,6 +47,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Question'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -79,7 +80,8 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Difficulty Level'),
+                  decoration:
+                      const InputDecoration(labelText: 'Difficulty Level'),
                   value: _difficultyLevel,
                   items: ['Easy', 'Difficult', 'Hard'].map((level) {
                     return DropdownMenuItem(
@@ -116,7 +118,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  maxLines:null,
+                  maxLines: null,
                   keyboardType: TextInputType.multiline,
                   controller: _questionTextController,
                   decoration: const InputDecoration(labelText: 'Question Text'),
@@ -136,11 +138,12 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 DropdownButtonFormField<int>(
-                  decoration: const InputDecoration(labelText: 'Correct Option'),
+                  decoration:
+                      const InputDecoration(labelText: 'Correct Option'),
                   value: _correctOption,
                   items: List.generate(
                     _optionsControllers.length,
-                        (index) => DropdownMenuItem(
+                    (index) => DropdownMenuItem(
                       value: index,
                       child: Text('Option ${index + 1}'),
                     ),
@@ -159,6 +162,10 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ),
                 const SizedBox(height: 32.0),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       _addQuestion();
@@ -166,6 +173,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                   },
                   child: const Text('Add Question'),
                 ),
+                const SizedBox(height: 16.0),
               ],
             ),
           ),
@@ -181,27 +189,20 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         child: TextFormField(
           controller: _optionsControllers[index],
           decoration: InputDecoration(labelText: 'Option ${index + 1}'),
-          // validator: (value) {
-          //   if (value == null || value.isEmpty) {
-          //     return 'Please enter option ${index + 1}';
-          //   }
-          //   return null;
-          // },
         ),
       );
     });
   }
 
-
   Future<void> _addQuestion() async {
-
-      Question question = Question(
+    Question question = Question(
       title: _titleController.text,
       content: _contentController.text,
       difficulty: _difficultyLevel,
       rewards: int.parse(_rewardsController.text),
       questionText: _questionTextController.text,
-      options: _optionsControllers.map((controller) => controller.text).toList(),
+      options:
+          _optionsControllers.map((controller) => controller.text).toList(),
       correctOption: _correctOption,
       feedback: _feedbackController.text,
       lessonId: widget.lessonId,
@@ -211,6 +212,5 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
     if (mounted) {
       Navigator.of(context).pop();
     }
-
   }
 }

@@ -5,8 +5,8 @@ import "../user/user_lesson_service.dart";
 import '../services/auth.dart';
 import '../user/user_lesson.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:provider/provider.dart'; // Add this import
-import '../provider/lesson_provider.dart'; // Add this import
+import 'package:provider/provider.dart';
+import '../provider/lesson_provider.dart';
 
 class RedirectAddCourse extends StatefulWidget {
   const RedirectAddCourse({super.key});
@@ -227,29 +227,18 @@ class _AddCourseState extends State<RedirectAddCourse> {
                     Spacer(),
                     ElevatedButton(
                       onPressed: () async {
-                        // Make onPressed async
-                        // Get the provider instance
                         final lessonProvider =
                             Provider.of<LessonProvider>(context, listen: false);
-                        // Call refresh before navigating
-                        print(
-                            '[Debug] Calling lessonProvider.refresh() before navigation.'); // Debug
+
                         await lessonProvider.refresh();
-                        print(
-                            '[Debug] lessonProvider.refresh() completed.'); // Debug
-                        // Now navigate
+
                         if (mounted) {
-                          // Check mounted after await
-                          print('[Debug] Navigating to Home.'); // Debug
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const Home()),
                           );
-                        } else {
-                          print(
-                              '[Debug] Widget not mounted after refresh, cannot navigate.'); // Debug
-                        }
+                        } else {}
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF58CC02),

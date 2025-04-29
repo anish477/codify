@@ -15,4 +15,15 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- Theme for UCropActivity -->
+    <style name="UcropTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+    <style name="UCropActivityTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- allow coloring and insetting of the status bar -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- <item name="android:statusBarColor">@android:color/transparent</item> -->
+        <!-- handle display cutouts (notches) -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- push layout below system bars -->
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
 </resources>

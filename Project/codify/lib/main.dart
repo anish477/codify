@@ -12,9 +12,18 @@ import 'package:codify/auth_wrapper.dart';
 import "package:provider/provider.dart";
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:codify/lesson/category_service.dart';
+import 'package:codify/user/user_lesson_service.dart';
+import 'package:codify/services/auth.dart';
+import 'dart:io';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isAndroid) {
+    // WebView.platform = SurfaceAndroidWebView();
+  }
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

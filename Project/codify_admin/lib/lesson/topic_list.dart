@@ -28,14 +28,17 @@ class _TopicListState extends State<TopicList> {
   Future<void> _fetchTopics() async {
     final topics = await _topicService.getAllTopics();
     setState(() {
-      _topics = topics.where((topic) => topic.categoryId == widget.category.documentId).toList();
+      _topics = topics
+          .where((topic) => topic.categoryId == widget.category.documentId)
+          .toList();
     });
   }
 
   Future<void> _addTopic() async {
     final newTopic = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => AddTopicScreen(categoryId: widget.category.documentId),
+        builder: (context) =>
+            AddTopicScreen(categoryId: widget.category.documentId),
       ),
     );
 
@@ -55,7 +58,8 @@ class _TopicListState extends State<TopicList> {
 
     if (updatedTopic != null) {
       setState(() {
-        final index = _topics.indexWhere((t) => t.documentId == updatedTopic.documentId);
+        final index =
+            _topics.indexWhere((t) => t.documentId == updatedTopic.documentId);
         if (index != -1) {
           _topics[index] = updatedTopic;
         }
@@ -68,6 +72,7 @@ class _TopicListState extends State<TopicList> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text('Delete Topic'),
           content: const Text('Are you sure you want to delete this topic?'),
           actions: [
@@ -99,51 +104,77 @@ class _TopicListState extends State<TopicList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
         title: Text('Topics in ${widget.category.name}'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.separated(
-              itemCount: _topics.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  color: Colors.grey[200],
-                  child: ListTile(
-                    title: Text(_topics[index].name),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TopicContent(topicId: _topics[index].documentId),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                child: ListView.separated(
+                  itemCount: _topics.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 5,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        title: Text(_topics[index].name),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TopicContent(
+                                  topicId: _topics[index].documentId),
+                            ),
+                          );
+                        },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit,
+                                  color: Colors.blueAccent),
+                              onPressed: () => _editTopic(_topics[index]),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _confirmDeleteTopic(
+                                  _topics[index].documentId),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => _editTopic(_topics[index]),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () => _confirmDeleteTopic(_topics[index].documentId),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                ),
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFFFFFFF),
         onPressed: _addTopic,
-        child: Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+          color: Colors.blue,
+        ),
       ),
     );
   }

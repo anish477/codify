@@ -37,10 +37,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFFF),
         title: const Text('Add Category'),
-        actions: [
-
-        ],
+        actions: [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -54,7 +53,6 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Category Name',
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -63,15 +61,18 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     return null;
                   },
                 ),
-
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final name = _nameController.text;
 
                     final category = Category(
-                      documentId: '', // Provide a default value for documentId
+                      documentId: '',
                       name: name,
                       lessonIds: [],
                     );
@@ -80,9 +81,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     Navigator.of(context).pop();
                   }
                 },
-                child: const Text("Save Category"),
+                child: const Text(
+                  "Save Category",
+                ),
               ),
-              Text("Delete "),
             ],
           ),
         ),

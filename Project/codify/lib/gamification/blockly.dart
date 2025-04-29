@@ -1,7 +1,10 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_blockly/flutter_blockly.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'content.dart';
 
@@ -13,16 +16,18 @@ class WebViewApp extends StatefulWidget {
 }
 
 class _WebViewAppState extends State<WebViewApp> {
-  // final BlocklyOptions workspaceConfiguration = BlocklyOptions(
-  //   grid: const GridOptions(
-  //     spacing: 20,
-  //     length: 3,
-  //     colour: '#ccc',
-  //     snap: true,
-  //   ),
-  //   toolbox: ToolboxInfo.fromJson(initialToolboxJson),
-  // );
+  @override
+  void initState() {
+    super.initState();
 
+    if (Platform.isAndroid) {
+      //   WebView.platform = AndroidWebView();
+      // } else if (Platform.isIOS) {
+      //   WebView.platform = WebKitWebView();
+    }
+  }
+
+  // Use default media path; static options work on mobile
   final BlocklyOptions workspaceConfiguration = BlocklyOptions.fromJson(const {
     'grid': {
       'spacing': 20,
@@ -31,31 +36,7 @@ class _WebViewAppState extends State<WebViewApp> {
       'snap': true,
     },
     'toolbox': initialToolboxJson,
-    // null safety example
-    'collapse': null,
-    'comments': null,
-    'css': null,
-    'disable': null,
-    'horizontalLayout': null,
-    'maxBlocks': null,
-    'maxInstances': null,
-    'media': null,
-    'modalInputs': null,
-    'move': null,
-    'oneBasedIndex': null,
-    'readOnly': null,
-    'renderer': null,
-    'rendererOverrides': null,
-    'rtl': null,
-    'scrollbars': null,
-    'sounds': null,
-    'theme': null,
-    'toolboxPosition': null,
-    'trashcan': null,
-    'maxTrashcanContents': null,
-    'plugins': null,
-    'zoom': null,
-    'parentWorkspace': null,
+    'media': 'packages/flutter_blockly/assets/media',
   });
 
   void onInject(BlocklyData data) {
@@ -80,7 +61,8 @@ class _WebViewAppState extends State<WebViewApp> {
       body: SafeArea(
         child: BlocklyEditorWidget(
           workspaceConfiguration: workspaceConfiguration,
-          initial: initialJson,
+          // initialXml: initialXml, // add xml initial state for mobile
+          // initialJson: initialJson, // add json initial state
           onInject: onInject,
           onChange: onChange,
           onDispose: onDispose,

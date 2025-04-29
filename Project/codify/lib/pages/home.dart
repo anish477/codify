@@ -205,18 +205,19 @@ class _HomeState extends State<Home> {
       body: <Widget>[
         LessonMain(),
         Training(),
-        kIsWeb
-            ? WebViewApp()
-            : const Center(
-                child: Text(
-                  'Blockly editor is not available on the Mobile version',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.blue,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+        // kIsWeb
+        //     ? WebViewApp()
+        //     : const Center(
+        //         child: Text(
+        //           'Blockly editor is not available on the Mobile version',
+        //           style: TextStyle(
+        //             fontSize: 24,
+        //             color: Colors.blue,
+        //           ),
+        //           textAlign: TextAlign.center,
+        //         ),
+        //       ),
+        WebViewApp(),
         LeaderboardPage(),
         Profile(),
       ][currentPageIndex],

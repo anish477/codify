@@ -42,7 +42,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFFFFFF),
       appBar: AppBar(
+        backgroundColor: Color(0xFFFFFFFF),
         title: const Text('Edit Category'),
       ),
       body: Padding(
@@ -63,6 +65,10 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: _updateCategory,
                 child: const Text('Update Category'),
               ),

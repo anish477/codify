@@ -59,6 +59,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- ensure UCropActivity uses your inset‐aware theme -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:theme="@style/UCropActivityTheme"
+            android:screenOrientation="portrait"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

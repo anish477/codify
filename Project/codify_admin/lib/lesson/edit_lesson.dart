@@ -20,9 +20,9 @@ class _EditLessonState extends State<EditLesson> {
   @override
   void initState() {
     super.initState();
-    _questionNameController = TextEditingController(text: widget.lesson.questionName);
-    _indexController= TextEditingController(text: widget.lesson.index);
-
+    _questionNameController =
+        TextEditingController(text: widget.lesson.questionName);
+    _indexController = TextEditingController(text: widget.lesson.index);
   }
 
   @override
@@ -48,6 +48,7 @@ class _EditLessonState extends State<EditLesson> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Lesson'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -77,6 +78,10 @@ class _EditLessonState extends State<EditLesson> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: _updateLesson,
                 child: const Text('Update Lesson'),
               ),

@@ -27,7 +27,7 @@ class _AddLessonState extends State<AddLesson> {
   Future<void> _addLesson() async {
     if (_formKey.currentState!.validate()) {
       final newLesson = Lesson(
-        documentId: '', // Firestore will generate the ID
+        documentId: '',
         topicId: widget.topicId,
         questionName: _questionNameController.text,
         index: _indexController.text,
@@ -49,6 +49,7 @@ class _AddLessonState extends State<AddLesson> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Lesson'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -78,6 +79,10 @@ class _AddLessonState extends State<AddLesson> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: _addLesson,
                 child: const Text('Add Lesson'),
               ),

@@ -28,12 +28,18 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     super.initState();
     _titleController = TextEditingController(text: widget.question.title);
     _contentController = TextEditingController(text: widget.question.content);
-    _difficultyController = TextEditingController(text: widget.question.difficulty);
-    _rewardsController = TextEditingController(text: widget.question.rewards.toString());
+    _difficultyController =
+        TextEditingController(text: widget.question.difficulty);
+    _rewardsController =
+        TextEditingController(text: widget.question.rewards.toString());
     _feedbackController = TextEditingController(text: widget.question.feedback);
-    _questionTextController = TextEditingController(text: widget.question.questionText);
-    _optionsControllers = widget.question.options.map((option) => TextEditingController(text: option)).toList();
-    _correctOptionController = TextEditingController(text: widget.question.correctOption.toString());
+    _questionTextController =
+        TextEditingController(text: widget.question.questionText);
+    _optionsControllers = widget.question.options
+        .map((option) => TextEditingController(text: option))
+        .toList();
+    _correctOptionController =
+        TextEditingController(text: widget.question.correctOption.toString());
   }
 
   @override
@@ -60,11 +66,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         rewards: int.parse(_rewardsController.text),
         feedback: _feedbackController.text,
         questionText: _questionTextController.text,
-        options: _optionsControllers.map((controller) => controller.text).toList(),
+        options:
+            _optionsControllers.map((controller) => controller.text).toList(),
         correctOption: int.parse(_correctOptionController.text),
       );
 
-      await _questionService.updateQuestion(updatedQuestion.documentId, updatedQuestion);
+      await _questionService.updateQuestion(
+          updatedQuestion.documentId, updatedQuestion);
       Navigator.of(context).pop(updatedQuestion);
     }
   }
@@ -74,6 +82,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Question'),
+        backgroundColor: const Color(0xFFFFFFFF),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -132,7 +141,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  maxLines:null,
+                  maxLines: null,
                   keyboardType: TextInputType.multiline,
                   controller: _questionTextController,
                   decoration: const InputDecoration(labelText: 'Question Text'),
@@ -153,7 +162,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 const SizedBox(height: 16.0),
                 TextFormField(
                   controller: _correctOptionController,
-                  decoration: const InputDecoration(labelText: 'Correct Option (index)'),
+                  decoration: const InputDecoration(
+                      labelText: 'Correct Option (index)'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -167,9 +177,14 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 ),
                 const SizedBox(height: 32.0),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: _updateQuestion,
                   child: const Text('Update Question'),
                 ),
+                const SizedBox(height: 16.0),
               ],
             ),
           ),
@@ -185,12 +200,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         child: TextFormField(
           controller: _optionsControllers[index],
           decoration: InputDecoration(labelText: 'Option ${index + 1}'),
-          // validator: (value) {
-          //   if (value == null || value.isEmpty) {
-          //     return 'Please enter option ${index + 1}';
-          //   }
-          //   return null;
-          // },
         ),
       );
     });
