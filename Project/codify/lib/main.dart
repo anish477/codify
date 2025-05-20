@@ -1,3 +1,4 @@
+import 'package:codify/pages/badge_provider.dart';
 import 'package:codify/provider/leaderboard_provider.dart';
 import 'package:codify/provider/lesson_provider.dart';
 import 'package:codify/provider/lives_provider.dart';
@@ -10,34 +11,49 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:codify/auth_wrapper.dart';
 import "package:provider/provider.dart";
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:codify/lesson/category_service.dart';
-import 'package:codify/user/user_lesson_service.dart';
-import 'package:codify/services/auth.dart';
-import 'dart:io';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'dart:io'
+    if (dart.library.html) 'package:codify/web_stub/platform_stub.dart'
+    as platform;
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isAndroid) {
-    // WebView.platform = SurfaceAndroidWebView();
-  }
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  if (!kIsWeb) {
-    final notificationService = NotificationService();
-    await notificationService.initialize();
+  if (kIsWeb) {
+    if (kDebugMode) {
+      print("Running on web platform - initializing web configuration");
+      print("NotificationService initialization skipped on web.");
+    }
+
+    tz.initializeTimeZones();
   } else {
-    print("NotificationService initialization skipped on web.");
+    try {
+      if (platform.Platform.isAndroid) {}
+
+      final notificationService = NotificationService();
+      await notificationService.initialize();
+
+      tz.initializeTimeZones();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error during platform initialization: $e");
+      }
+    }
   }
 
-  tz.initializeTimeZones();
-
   runApp(const MyApp());
+
+  Future.delayed(const Duration(seconds: 1), () {
+    FlutterNativeSplash.remove();
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -45,21 +61,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) => LessonProvider(),
+    return Phoenix(
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) => LessonProvider(),
+          ),
+          ChangeNotifierProvider(create: (context) => LivesProvider()),
+          ChangeNotifierProvider(create: (context) => StreakProvider()),
+          ChangeNotifierProvider(
+            create: (context) => ProfileProvider(),
+          ),
+          ChangeNotifierProvider(create: (context) => LeaderboardProvider()),
+          ChangeNotifierProvider(create: (context) => UserStatProvider()),
+          ChangeNotifierProvider(create: (context) => BadgeProvider()),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: const AuthWrapper(),
         ),
-        ChangeNotifierProvider(create: (context) => LivesProvider()),
-        ChangeNotifierProvider(create: (context) => StreakProvider()),
-        ChangeNotifierProvider(
-          create: (context) => ProfileProvider(),
-        ),
-        ChangeNotifierProvider(create: (context) => LeaderboardProvider()),
-        ChangeNotifierProvider(create: (context) => UserStatProvider()),
-      ],
-      child: MaterialApp(
-        home: const AuthWrapper(),
       ),
     );
   }

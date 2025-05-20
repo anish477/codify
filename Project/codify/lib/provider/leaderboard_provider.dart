@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../gamification/leaderboard_service.dart';
 import '../services/auth.dart';
@@ -20,6 +21,7 @@ class LeaderboardProvider extends ChangeNotifier {
   Map<String, List<ImageModel>> _userImages = {};
   Map<String, UserDetail> _userDetails = {};
   List<String> _userIds = [];
+  Timer? _refreshTimer;
 
   Map<String, int> get userPoints => _userPoints;
   Map<String, int> get userPointsForGraph => _userPoints;
@@ -33,6 +35,12 @@ class LeaderboardProvider extends ChangeNotifier {
 
   LeaderboardProvider() {
     refreshLeaderboard();
+  
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (!_isLoading) {
+        refreshLeaderboard(silentRefresh: true);
+      }
+    });
   }
 
   Future<void> _fetchUserPoints() async {
@@ -50,22 +58,25 @@ class LeaderboardProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshLeaderboard() async {
-    _isLoading = true;
-    notifyListeners();
-    // ensure user ID
-    if (_userId == null) {
-      _userId = await _authService.getUID();
+  Future<void> refreshLeaderboard({bool silentRefresh = false}) async {
+    if (_isLoading) return;
+
+    if (!silentRefresh) {
+      _isLoading = true;
+      notifyListeners();
     }
+
+   
+    _userId ??= await _authService.getUID();
     if (_userId != null) {
-      // fetch points and weekly data
+  
       await _fetchUserPoints();
       await getTotalPointsByUserPerDayLast7Days();
-      // prepare sorted user IDs
+     
       final sorted = _userPoints.entries.toList()
         ..sort((a, b) => b.value.compareTo(a.value));
       _userIds = sorted.map((e) => e.key).toList();
-      // fetch images and details
+   
       final imagesMap = <String, List<ImageModel>>{};
       final detailsMap = <String, UserDetail>{};
       await Future.wait(_userIds.map((uid) async {
@@ -79,5 +90,16 @@ class LeaderboardProvider extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+
+  void refreshAfterPointsUpdate() {
+    refreshLeaderboard();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 }

@@ -10,6 +10,7 @@ import '../lesson/question.dart';
 import '../services/auth.dart';
 import '../provider/lives_provider.dart';
 import 'lesson_completed_page.dart';
+import 'package:provider/provider.dart';
 
 class TrainingMistake extends StatefulWidget {
   const TrainingMistake({super.key});
@@ -97,9 +98,11 @@ class _TrainingMistakeState extends State<TrainingMistake> {
       final double accuracy =
           _totalAttempts > 0 ? (_correctAnswers / _totalAttempts) * 100 : 100.0;
 
+      final mistakeToDelete = _mistakes[_currentMistakeIndex].mistake;
+
+      await _userMistakeService.deleteUserMistake(mistakeToDelete);
+
       setState(() {
-        print(_mistakes.first.mistake);
-        _userMistakeService.deleteUserMistake(_mistakes.first.mistake);
         _mistakes.removeAt(_currentMistakeIndex);
 
         if (_mistakes.isEmpty) {
@@ -120,13 +123,42 @@ class _TrainingMistakeState extends State<TrainingMistake> {
         }
       });
     } else {
+      final livesProvider = Provider.of<LivesProvider>(context, listen: false);
+      livesProvider.decreaseLives();
+      if (livesProvider.lives?.currentLives == 0) {
+        Future.delayed(const Duration(milliseconds: 300), _showNoLivesDialog);
+        return;
+      }
+
       final user = await _auth.getUID();
       if (user != null) {
-        _userMistakeService.createUserMistake(UserMistake(
+        await _userMistakeService.createUserMistake(UserMistake(
           userId: user,
           mistake: question.documentId,
         ));
       }
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Incorrect!', style: TextStyle(color: Colors.red)),
+          content: Text(
+            'Feedback:\n${question?.feedback}',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('OK',
+                  style: TextStyle(
+                    color: Color(0xFF00C7BE),
+                    fontWeight: FontWeight.bold,
+                  )),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        ),
+      );
     }
   }
 
@@ -146,7 +178,7 @@ class _TrainingMistakeState extends State<TrainingMistake> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context).pop();
               },
             ),
             Expanded(
@@ -159,9 +191,6 @@ class _TrainingMistakeState extends State<TrainingMistake> {
                     const AlwaysStoppedAnimation<Color>(Color(0xFF00C7BE)),
               ),
             ),
-            // Points indicator
-
-            // Lives indicator
             Row(
               children: [
                 Text(
@@ -209,7 +238,6 @@ class _TrainingMistakeState extends State<TrainingMistake> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Content remains the same
                           Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
@@ -303,6 +331,28 @@ class _TrainingMistakeState extends State<TrainingMistake> {
             ),
           ),
       ],
+    );
+  }
+
+  void _showNoLivesDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('No Lives Left', style: TextStyle(color: Colors.red)),
+        content: const Text(
+            'You have run out of lives. Please wait for them to refill.'),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      ),
     );
   }
 }

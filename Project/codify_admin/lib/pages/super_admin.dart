@@ -2,7 +2,6 @@ import 'package:codify_admin/pages/image.dart';
 import 'package:flutter/material.dart';
 import 'package:codify_admin/pages/super_admin_service.dart';
 import 'package:codify_admin/pages/user.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:codify_admin/pages/image_service.dart';
 import 'package:codify_admin/pages/user_detail_page.dart';
 
@@ -14,53 +13,53 @@ class SuperAdminPage extends StatefulWidget {
 class _SuperAdminPageState extends State<SuperAdminPage> {
   final UserDetailService _userDetailService = UserDetailService();
   late Future<List<UserDetail>> _usersFuture;
-  List<UserDetail> _allUsers = []; // Store all fetched users
-  List<UserDetail> _filteredUsers = []; // Store filtered users
-  final ImageService _imageService = ImageService(); // Initialize ImageService
+  List<UserDetail> _allUsers = [];
+  List<UserDetail> _filteredUsers = [];
+  final ImageService _imageService = ImageService();
   final TextEditingController _searchController = TextEditingController();
-  // Default to showing NON-blacklisted users
+
   bool _showBlacklistedOnly = false;
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
-    _searchController.addListener(_filterUsers); // Add listener for search
+    _searchController.addListener(_filterUsers);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_filterUsers); // Remove listener
-    _searchController.dispose(); // Dispose controller
+    _searchController.removeListener(_filterUsers);
+    _searchController.dispose();
     super.dispose();
   }
 
   void _loadUsers() {
     setState(() {
-      // Load blacklisted or non-blacklisted based on the filter state
+
       _usersFuture = (_showBlacklistedOnly
               ? _userDetailService.getBlacklistedUsers()
               : _userDetailService.getNonBlacklistedUsers())
           .then((users) {
-        _allUsers = users; // Store the fetched users
-        _filterUsers(); // Apply initial filter (which might be empty)
-        return _filteredUsers; // Return the initially filtered list for the FutureBuilder
+        _allUsers = users;
+        _filterUsers();
+        return _filteredUsers;
       });
     });
   }
 
-  // Filter users based on the search query
+
   void _filterUsers() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredUsers = List.from(_allUsers); // Show all if query is empty
+        _filteredUsers = List.from(_allUsers);
       } else {
         _filteredUsers = _allUsers.where((user) {
           final nameMatches = user.name?.toLowerCase().contains(query) ?? false;
           final userIdMatches =
               user.userId?.toLowerCase().contains(query) ?? false;
-          // Assuming email exists
+
           return nameMatches || userIdMatches;
         }).toList();
       }
@@ -79,7 +78,7 @@ class _SuperAdminPageState extends State<SuperAdminPage> {
           backgroundColor: const Color(0xFFFFFFFF),
           title: Text(title),
           content: SingleChildScrollView(
-            // In case content is long
+
             child: Text(content),
           ),
           actions: <Widget>[

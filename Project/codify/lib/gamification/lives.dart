@@ -4,7 +4,7 @@ class Lives {
   int currentLives;
   DateTime? lastRefillTime;
   final String userId;
-  Duration? refillTime; // Changed to Duration?
+  Duration? refillTime; 
   String id;
 
   Lives({
@@ -15,44 +15,43 @@ class Lives {
     this.refillTime,
   });
 
-// Method to check if a life can be refilled
   bool canRefill() {
     if (currentLives >= 5) {
-      return false; // Already at max lives
+      return false; 
     }
     if (lastRefillTime == null) {
-      return true; // No refill started yet
+      return true;
     }
     final now = DateTime.now();
     final difference = now.difference(lastRefillTime!);
-    return difference.inMinutes >= 5; // 5 minutes have passed
+    return difference.inMinutes >= 5; 
   }
 
-// Method to refill a life
+
   void refillLife() {
     if (canRefill()) {
       currentLives++;
       lastRefillTime = DateTime.now();
-      getNextRefillTime(); // Update refillTime
+      getNextRefillTime(); 
     }
   }
 
-// Method to consume a life
+
   void consumeLife() {
     if (currentLives > 0) {
       currentLives--;
       if (currentLives == 4) {
         lastRefillTime = DateTime.now();
       }
-      getNextRefillTime(); // Update refillTime
+      getNextRefillTime(); 
     }
   }
 
-// Method to get the time left for the next refill
+
   Duration? getNextRefillTime() {
     if (currentLives >= 5 || lastRefillTime == null) {
-      refillTime = null; // Set refillTime to null when no refill is needed
-      return null; // No refill needed or no refill started
+      refillTime = null; 
+      return null; 
     }
     final now = DateTime.now();
     final nextRefill = lastRefillTime!.add(const Duration(minutes: 5));
@@ -63,7 +62,7 @@ class Lives {
 
   }
 
-// Method to convert Lives to a map for storage
+
   Map<String, dynamic> toMap() {
     return {
       'currentLives': currentLives,
@@ -72,7 +71,6 @@ class Lives {
     };
   }
 
-// Method to create Lives from a document
   static Lives fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Lives(

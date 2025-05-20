@@ -3,10 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../provider/leaderboard_provider.dart';
-import '../user/user_service.dart';
-import "../user/image_service.dart";
-import "../user/image.dart";
-import "../user/user.dart";
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -44,168 +40,140 @@ class _LeaderboardPageState extends State<LeaderboardPage>
     final provider = context.watch<LeaderboardProvider>();
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         centerTitle: true,
         title: const Text(
           "Leaderboard",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ),
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: provider.isLoading
           ? _buildLoadingShimmer()
           : SmartRefresher(
               controller: _refreshController,
               onRefresh: _onRefresh,
               header: const WaterDropHeader(),
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
+              child: ListView(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF777777),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.3),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       children: [
-                        // Weekly points banner
-                        Container(
-                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF777777),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                spreadRadius: 1,
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Your Weekly XP',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${provider.totalWeeklyPoints}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "XP",
-                                    style: TextStyle(
-                                        fontSize: 25,
-                                        color: Colors.yellow,
-                                        fontWeight: FontWeight.bold),
-                                  )
-                                ],
-                              ),
-                            ],
+                        const Text(
+                          'Your Weekly XP',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
                         ),
-
-                        // Reset notification
-                        if (provider.wasPointsReset)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            margin: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.green[100],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.green[400]!),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(width: 8),
+                            Text(
+                              '${provider.totalWeeklyPoints}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.refresh_rounded,
-                                    color: Colors.green[700]),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Your weekly points have been reset!',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.green[800],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        // Top 3 podium
-                        if (provider.userIds.length >= 3)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 16),
-                            child: _buildTopThreePodium(provider),
-                          ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "XP",
+                              style: TextStyle(
+                                  fontSize: 25,
+                                  color: Colors.yellow,
+                                  fontWeight: FontWeight.bold),
+                            )
+                          ],
+                        ),
                       ],
                     ),
                   ),
-
-                  // Leaderboard header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  if (provider.wasPointsReset)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green[400]!),
+                      ),
                       child: Row(
-                        children: const [
-                          Text(
-                            "Leaderboard Rankings",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                        children: [
+                          Icon(Icons.refresh_rounded, color: Colors.green[700]),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Your weekly points have been reset!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.green[800],
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-
-                  // Leaderboard list
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        // Skip the top 3 users as they are displayed in the podium
-                        final listIndex = index;
-                        final currentUserId = provider.userIds[listIndex];
-                        final myId = provider.currentUserId;
-                        final isMe = currentUserId == myId;
-                        final images = provider.userImages[currentUserId] ?? [];
-                        final userDetail = provider.userDetails[currentUserId];
-                        final totalPoints =
-                            provider.userPoints[currentUserId] ?? 0;
-                        final rank = listIndex + 1;
-
-                        return _buildLeaderboardItem(
-                          rank: rank,
-                          imageUrl: images.isNotEmpty ? images[0].image : null,
-                          username: userDetail?.name ?? 'Unknown User',
-                          points: totalPoints,
-                          isMe: isMe,
-                        );
-                      },
-                      childCount: provider.userIds.length,
+                  if (provider.userIds.length >= 3)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 16),
+                      child: _buildTopThreePodium(provider),
+                    ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 24, 16, 8),
+                    child: Text(
+                      "Leaderboard Rankings",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
+                  ...List.generate(provider.userIds.length, (index) {
+                    final currentUserId = provider.userIds[index];
+                    final myId = provider.currentUserId;
+                    final isMe = currentUserId == myId;
+                    final images = provider.userImages[currentUserId] ?? [];
+                    final userDetail = provider.userDetails[currentUserId];
+                    final totalPoints = provider.userPoints[currentUserId] ?? 0;
+                    final rank = index + 1;
 
-                  // Add bottom padding
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 16),
-                  ),
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 1),
+                      child: _buildLeaderboardItem(
+                        rank: rank,
+                        imageUrl: images.isNotEmpty ? images[0].image : null,
+                        username: userDetail?.name ?? 'Unknown User',
+                        points: totalPoints,
+                        isMe: isMe,
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -214,10 +182,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
 
   Widget _buildTopThreePodium(LeaderboardProvider leaderboardProvider) {
     final myId = leaderboardProvider.currentUserId;
-    // Ensure we have at least 3 users
+
     if (leaderboardProvider.userIds.length < 3) return const SizedBox.shrink();
 
-    // User data for top 3
     final firstUserId = leaderboardProvider.userIds[0];
     final secondUserId = leaderboardProvider.userIds[1];
     final thirdUserId = leaderboardProvider.userIds[2];
@@ -250,7 +217,6 @@ class _LeaderboardPageState extends State<LeaderboardPage>
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Second place
         Expanded(
           child: Column(
             children: [
@@ -306,8 +272,6 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             ],
           ),
         ),
-
-        // First place
         Expanded(
           flex: 3,
           child: Column(
@@ -379,8 +343,6 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             ],
           ),
         ),
-
-        // Third place
         Expanded(
           child: Column(
             children: [
@@ -566,7 +528,6 @@ class _LeaderboardPageState extends State<LeaderboardPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Shimmer for weekly points banner
           Container(
             margin: const EdgeInsets.all(16),
             height: 100,
@@ -575,8 +536,6 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-
-          // Shimmer for podium
           Container(
             margin: const EdgeInsets.all(16),
             height: 150,
@@ -585,16 +544,12 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-
-          // Shimmer for leaderboard title
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             height: 24,
             width: 160,
             color: Colors.white,
           ),
-
-          // Shimmer for leaderboard items
           Expanded(
             child: ListView.builder(
               itemCount: 5,

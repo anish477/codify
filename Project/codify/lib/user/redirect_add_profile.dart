@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:codify/user/user_service.dart';
 import 'package:codify/services/auth.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:codify/provider/profile_provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:codify/services/user_redirection_service.dart';
 
 class RedirectProfile extends StatefulWidget {
   const RedirectProfile({super.key});
@@ -17,10 +21,12 @@ class _ProfileState extends State<RedirectProfile> {
   final _ageTextController = TextEditingController();
   final AuthService _auth = AuthService();
   final UserService _userService = UserService();
+  final UserRedirectionService _redirectionService = UserRedirectionService();
   List<UserDetail> _userDetails = [];
   bool _isLoading = true;
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _hasImage = false;
 
   @override
   void dispose() {
@@ -33,6 +39,10 @@ class _ProfileState extends State<RedirectProfile> {
   void initState() {
     super.initState();
     _fetchUserData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProfileProvider>(context, listen: false).fetchData();
+    });
   }
 
   @override
@@ -55,34 +65,104 @@ class _ProfileState extends State<RedirectProfile> {
               key: _formKey,
               child: Column(
                 children: <Widget>[
-                  _isLoading
-                      ? Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: Container(
-                            height: 56,
-                            width: double.infinity,
-                            color: Colors.white,
-                          ),
-                        )
-                      : TextFormField(
-                          controller: _nameTextController,
-                          decoration: const InputDecoration(
-                            labelText: "Name",
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            return null;
-                          },
+                  Consumer<ProfileProvider>(
+                    builder: (context, profileProvider, _) {
+                      _hasImage = profileProvider.images.isNotEmpty;
+                      return Center(
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                profileProvider.pickAndUploadImage(context);
+                              },
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey[200],
+                                      image: profileProvider.images.isNotEmpty
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                  profileProvider
+                                                      .images.first.image),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: profileProvider.isUploading
+                                        ? Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : profileProvider.images.isEmpty
+                                            ? Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.grey[400],
+                                              )
+                                            : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            if (!_hasImage)
+                              Text(
+                                "Profile image is required",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
                         ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 24),
+                  TextFormField(
+                    controller: _nameTextController,
+                    decoration: const InputDecoration(
+                      labelText: "Name *",
+                      hintText: "Enter your full name",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      if (value.trim().length < 2) {
+                        return 'Name must be at least 2 characters';
+                      }
+                      return null;
+                    },
+                  ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _ageTextController,
                     decoration: const InputDecoration(
-                      labelText: "Age",
+                      labelText: "Age *",
+                      hintText: "Enter your age",
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: TextInputType.number,
@@ -90,9 +170,17 @@ class _ProfileState extends State<RedirectProfile> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your age';
                       }
-                      if (int.tryParse(value) == null ||
-                          int.parse(value) <= 0) {
-                        return 'Please enter a valid age';
+                      if (int.tryParse(value) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      int? age = int.tryParse(value);
+                      if (age != null) {
+                        if (age <= 0) {
+                          return 'Age must be greater than 0';
+                        }
+                        if (age > 120) {
+                          return 'Please enter a valid age';
+                        }
                       }
                       return null;
                     },
@@ -100,7 +188,23 @@ class _ProfileState extends State<RedirectProfile> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      if (_formKey.currentState!.validate()) {
+                      bool isValid = _formKey.currentState!.validate();
+                      bool hasProfileImage =
+                          Provider.of<ProfileProvider>(context, listen: false)
+                              .images
+                              .isNotEmpty;
+
+                      if (!hasProfileImage) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please upload a profile image'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (isValid) {
                         _saveProfile();
                       }
                     },
@@ -159,9 +263,35 @@ class _ProfileState extends State<RedirectProfile> {
         await _userService.addUser(user);
       }
 
-      if (mounted) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => RedirectAddCourse()));
+      final hasImage = Provider.of<ProfileProvider>(context, listen: false)
+          .images
+          .isNotEmpty;
+      final hasName = _nameTextController.text.trim().isNotEmpty;
+      final hasAge = _ageTextController.text.trim().isNotEmpty;
+
+      if (hasImage && hasName && hasAge) {
+        if (mounted) {
+          final profileProvider =
+              Provider.of<ProfileProvider>(context, listen: false);
+          await profileProvider.fetchData();
+
+          if (profileProvider.user != null) {
+            await _redirectionService.checkAndRedirect(
+                context, profileProvider.user!.name);
+          } else {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const RedirectAddCourse()));
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Please complete all required fields')),
+          );
+        }
       }
     } catch (e) {
       print("Error saving user data: $e");

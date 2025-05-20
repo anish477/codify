@@ -2,8 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:codify/pages/add_course.dart';
 import 'package:codify/pages/add_profile.dart';
 import 'package:codify/pages/change_password.dart';
+
 import 'package:codify/provider/streak_provider.dart';
 import 'package:codify/provider/lesson_provider.dart';
+
+import 'package:codify/pages/badge_page.dart';
 
 import 'package:flutter/material.dart';
 
@@ -15,11 +18,32 @@ import 'package:intl/intl.dart';
 import '../widget/fullScreenImage.dart';
 import 'package:codify/provider/profile_provider.dart';
 
-class Profile extends StatelessWidget {
-  const Profile({Key? key}) : super(key: key);
+class Profile extends StatefulWidget {
+  const Profile({super.key});
+
+  @override
+  State<Profile> createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile>
+    with AutomaticKeepAliveClientMixin<Profile> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ProfileProvider>().fetchData();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final provider = context.watch<ProfileProvider>();
     return SafeArea(
       child: Scaffold(
@@ -28,6 +52,9 @@ class Profile extends StatelessWidget {
           title: const Text('Profile'),
           backgroundColor: Colors.white,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
         ),
         body: provider.isLoading
             ? _buildShimmerProfile(context)
@@ -139,6 +166,27 @@ class Profile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Badges page navigation
+                Container(
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey, width: 2)),
+                  child: ListTile(
+                    leading: Icon(Icons.emoji_events, color: Colors.amber),
+                    title: const Text("My Badges"),
+                    trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const BadgePage()),
+                      );
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
@@ -155,6 +203,7 @@ class Profile extends StatelessWidget {
                     },
                   ),
                 ),
+                const SizedBox(height: 10),
                 const SizedBox(height: 50),
                 Container(
                   decoration: BoxDecoration(
@@ -286,7 +335,15 @@ class Profile extends StatelessWidget {
               ],
               plotAreaBorderWidth: 0,
             )
-          : const Center(child: CircularProgressIndicator()),
+          : Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                height: 200,
+                width: double.infinity,
+                color: Colors.white,
+              ),
+            ),
     );
   }
 

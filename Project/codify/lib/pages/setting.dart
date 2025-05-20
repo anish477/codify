@@ -25,7 +25,10 @@ class _SettingState extends State<Setting> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Setting',style: TextStyle(fontSize: 30,fontWeight: FontWeight.bold),),
+            const Text(
+              'Setting',
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            ),
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
@@ -58,7 +61,8 @@ class _SettingState extends State<Setting> {
                 title: const Text("Profile"),
                 trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => AddProfile()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => AddProfile()));
                 },
               ),
             ),
@@ -81,10 +85,10 @@ class _SettingState extends State<Setting> {
                 title: const Text("Course"),
                 trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => AddCourse()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => AddCourse()));
                 },
               ),
-
             ),
             const SizedBox(height: 10),
             Container(
@@ -105,10 +109,12 @@ class _SettingState extends State<Setting> {
                 title: const Text("Change Password"),
                 trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => ChangePassword()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ChangePassword()));
                 },
               ),
-
             ),
             const SizedBox(height: 50),
             Container(
@@ -129,8 +135,10 @@ class _SettingState extends State<Setting> {
                 },
                 style: ElevatedButton.styleFrom(
                   fixedSize: const Size(40, 50),
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

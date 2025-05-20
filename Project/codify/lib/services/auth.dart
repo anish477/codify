@@ -1,9 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:provider/provider.dart';
-
-import '../provider/provider_reset_service.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
@@ -85,12 +83,25 @@ class AuthService {
 
   Future<void> signOut(BuildContext context) async {
     try {
+      final navigatorState = Navigator.of(context);
+
       await FirebaseAuth.instance.signOut();
       print("User signed out successfully!");
-      Provider.of<ProviderResetService>(context, listen: false)
-          .resetAllProviders();
+
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        print("Error signing out from Google: $e");
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (navigatorState.context.mounted) {
+          Phoenix.rebirth(navigatorState.context);
+        }
+      });
     } catch (e) {
       print("Error signing out: $e");
+      rethrow;
     }
   }
 
@@ -117,7 +128,6 @@ class AuthService {
         throw 'No user is currently signed in';
       }
 
-      // Get user email
       final String? email = user.email;
       if (email == null) {
         throw 'User email is not available';
@@ -130,7 +140,6 @@ class AuthService {
 
       await user.reauthenticateWithCredential(credential);
 
-      // Update the password
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'wrong-password') {

@@ -62,6 +62,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text('Delete Question'),
           content: const Text('Are you sure you want to delete this question?'),
           actions: [

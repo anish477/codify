@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 
-
-
 class LessonCompletedPage extends StatefulWidget {
   final int pointsEarned;
   final String lessonId;
   final Duration timeToComplete;
   final double accuracy;
+  final String? newBadge;
+  final int? newStreak;
 
   const LessonCompletedPage({
     super.key,
     required this.pointsEarned,
     required this.lessonId,
     required this.timeToComplete,
-    required this.accuracy
+    required this.accuracy,
+    this.newBadge,
+    this.newStreak,
   });
 
   @override
@@ -21,20 +23,14 @@ class LessonCompletedPage extends StatefulWidget {
 }
 
 class _LessonCompletedPageState extends State<LessonCompletedPage> {
-  
-
-  
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    
     return '$minutes:$seconds';
   }
 
   @override
   Widget build(BuildContext context) {
-    
-
     return Scaffold(
       backgroundColor: Color(0xFFFFFFFF),
       body: SafeArea(
@@ -43,12 +39,7 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-
               const SizedBox(height: 70),
-
-
-
-              // Title Text
               Text(
                 "Lesson Completed !",
                 style: TextStyle(
@@ -58,8 +49,6 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
                 ),
               ),
               const SizedBox(height: 8),
-
-              // Subtitle Text
               Text(
                 "Congrats !",
                 style: TextStyle(
@@ -68,8 +57,6 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
                 ),
               ),
               const SizedBox(height: 70),
-
-              // Stats Boxes Row
               Wrap(
                 alignment: WrapAlignment.spaceEvenly,
                 spacing: 20,
@@ -84,12 +71,11 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
                     titleColor: Color(0xFFFFFFFF),
                     valueColor: Colors.black87,
                   ),
-
                   _buildStatBox(
                     title: "TIME",
                     value: _formatDuration(widget.timeToComplete),
                     icon: Icons.timer,
-                    iconColor:Color(0xFF14D4F4),
+                    iconColor: Color(0xFF14D4F4),
                     backgroundColor: Color(0xFF1CB0f6),
                     titleColor: Color(0xFFFFFFFF),
                     valueColor: Colors.black87,
@@ -103,35 +89,70 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
                     titleColor: Color(0xFFFFFFFF),
                     valueColor: Colors.black87,
                   ),
+                  if (widget.newBadge != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'BADGE',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            height: 100,
+                            width: 100,
+                            child: widget.newBadge!
+                                    .toLowerCase()
+                                    .startsWith('http')
+                                ? Image.network(widget.newBadge!,
+                                    fit: BoxFit.contain)
+                                : Image.asset(widget.newBadge!,
+                                    fit: BoxFit.contain),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (widget.newStreak != null)
+                    _buildStatBox(
+                      title: 'STREAK',
+                      value: '${widget.newStreak} days',
+                      icon: Icons.whatshot,
+                      iconColor: Colors.deepOrange,
+                      backgroundColor: Colors.orange.shade300,
+                      titleColor: Colors.white,
+                      valueColor: Colors.black87,
+                    ),
                 ],
               ),
-
-
-              const SizedBox(height: 90,),
-
-
+              const SizedBox(height: 90),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
+                  onPressed: () =>
+                      Navigator.popUntil(context, (route) => route.isFirst),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF1cb0f6),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     elevation: 4,
                   ),
                   child: Text(
                     "CONTINUE",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
                   ),
                 ),
               ),
@@ -142,7 +163,6 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
       ),
     );
   }
-
 
   Widget _buildStatBox({
     required String title,
@@ -160,39 +180,37 @@ class _LessonCompletedPageState extends State<LessonCompletedPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-
-
         children: [
-
-            Text(
-              title,
-              style: TextStyle(
-                color: titleColor.withOpacity(0.8),
-                fontSize: 14,
-                fontWeight: FontWeight.w900
-                ,
-              ),
+          Text(
+            title,
+            style: TextStyle(
+              color: titleColor.withOpacity(0.8),
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
             ),
-
+          ),
           const SizedBox(height: 10),
           Card(
-
             child: SizedBox(
               height: 100,
               width: 100,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(icon, color: iconColor, size: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        color: valueColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: valueColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

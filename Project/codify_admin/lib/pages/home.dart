@@ -28,7 +28,7 @@ class _HomeState extends State<Home> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFFFFFFFFF),
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text("Logout"),
           content: const Text('Are you sure you want to logout?'),
           actions: <Widget>[
@@ -67,6 +67,7 @@ class _HomeState extends State<Home> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text('Delete Category'),
           content: const Text('Are you sure you want to delete this category?'),
           actions: [

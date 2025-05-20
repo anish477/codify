@@ -48,6 +48,8 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
       appBar: AppBar(
         title: const Text('Add Question'),
         backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -60,6 +62,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Title'),
+                  
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the title';
@@ -80,11 +83,13 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 DropdownButtonFormField<String>(
+                  
                   decoration:
-                      const InputDecoration(labelText: 'Difficulty Level'),
+                      const InputDecoration(labelText: 'Difficulty Level',fillColor: Color(0xFFFFFFFF),filled: true,),
                   value: _difficultyLevel,
                   items: ['Easy', 'Difficult', 'Hard'].map((level) {
                     return DropdownMenuItem(
+
                       value: level,
                       child: Text(level),
                     );

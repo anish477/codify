@@ -118,30 +118,25 @@ class NotificationService {
 
   Future<void> _saveFcmToken({String? token}) async {
     final fcmToken = token ?? await _fcm.getToken();
-    print('FCM Token: $fcmToken');
+    if (kDebugMode) {
+      print('[NotificationService] FCM Token: $fcmToken');
+    }
     final uid = await _authService.getUID();
 
     if (uid != null && fcmToken != null) {
       try {
+        await Future.delayed(Duration(seconds: 1));
+
         final users = await _userService.getUserByUserId(uid);
         if (users.isNotEmpty) {
           final user = users.first;
 
           if (user.fcmToken != fcmToken) {
-            print('Updating FCM token for user $uid');
             user.fcmToken = fcmToken;
             await _userService.updateUser(user);
-          } else {
-            print('FCM token is already up-to-date.');
           }
-        } else {
-          print('User not found for UID: $uid. Cannot save FCM token.');
         }
-      } catch (e) {
-        print('Error saving FCM token: $e');
-      }
-    } else {
-      print('UID or FCM Token is null. Cannot save token.');
+      } catch (e) {}
     }
   }
 
@@ -157,17 +152,7 @@ class NotificationService {
     required DateTime scheduledDateTime,
     String? payload,
   }) async {
-    if (kDebugMode) {
-      print(
-          '[NotificationService] Attempting to schedule notification ID: $id');
-      print('[NotificationService] Raw scheduledDateTime: $scheduledDateTime');
-    }
-
     if (scheduledDateTime.isBefore(DateTime.now())) {
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Error: Scheduled time $scheduledDateTime is in the past.');
-      }
       return;
     }
 
@@ -177,15 +162,7 @@ class NotificationService {
         scheduledDateTime,
         tz.local,
       );
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Converted scheduledDate (TZDateTime): $scheduledDate');
-      }
     } catch (e) {
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Error converting DateTime to TZDateTime: $e');
-      }
       return;
     }
 
@@ -196,7 +173,7 @@ class NotificationService {
       channelDescription: _androidChannelDescription,
       importance: Importance.high,
       priority: Priority.high,
-      color: const Color(0xFFFFFFFFF),
+      color: const Color(0xfffffffff),
     );
 
     final NotificationDetails platformDetails = NotificationDetails(
@@ -204,10 +181,6 @@ class NotificationService {
     );
 
     try {
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Calling zonedSchedule for ID $id at $scheduledDate');
-      }
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
@@ -217,25 +190,14 @@ class NotificationService {
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exact,
       );
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Successfully scheduled notification $id for $scheduledDate');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print(
-            '[NotificationService] Error calling zonedSchedule for notification $id: $e');
-      }
-    }
+    } catch (e) {}
   }
 
   Future<void> cancelScheduledNotification(int id) async {
     await _flutterLocalNotificationsPlugin.cancel(id);
-    print('Cancelled scheduled notification $id');
   }
 
   Future<void> cancelAllScheduledNotifications() async {
     await _flutterLocalNotificationsPlugin.cancelAll();
-    print('Cancelled all scheduled notifications');
   }
 }

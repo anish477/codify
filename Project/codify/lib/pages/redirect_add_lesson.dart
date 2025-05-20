@@ -21,6 +21,7 @@ class _AddCourseState extends State<RedirectAddCourse> {
   List<UserLesson> _userLesson = [];
 
   bool _isLoading = false;
+  bool _isSubmitting = false;
   String? _errorMessage;
 
   @override
@@ -61,10 +62,6 @@ class _AddCourseState extends State<RedirectAddCourse> {
           _errorMessage = "Failed to load courses: ${e.toString()}";
           _isLoading = false;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_errorMessage ?? "Error fetching courses.")),
-        );
       }
     }
   }
@@ -87,6 +84,7 @@ class _AddCourseState extends State<RedirectAddCourse> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text("Delete Course"),
           content: const Text("Are you sure you want to delete this course?"),
           actions: <Widget>[
@@ -109,6 +107,43 @@ class _AddCourseState extends State<RedirectAddCourse> {
     );
   }
 
+  Future<void> _handleNextButtonPress() async {
+    if (_userLesson.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please add at least one course before proceeding"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final lessonProvider =
+          Provider.of<LessonProvider>(context, listen: false);
+      await lessonProvider.refresh();
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        print("Error: $e");
+
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +154,8 @@ class _AddCourseState extends State<RedirectAddCourse> {
         centerTitle: true,
         backgroundColor: const Color(0xFFFFFFFF),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
@@ -213,9 +249,30 @@ class _AddCourseState extends State<RedirectAddCourse> {
                     if (_userLesson.isEmpty &&
                         !_isLoading &&
                         _errorMessage == null)
-                      const Text("No courses added yet",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.blue)),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            const Text(
+                              "No courses added yet",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Please add at least one course to continue",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -224,38 +281,40 @@ class _AddCourseState extends State<RedirectAddCourse> {
                           style: const TextStyle(color: Colors.red),
                         ),
                       ),
-                    Spacer(),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final lessonProvider =
-                            Provider.of<LessonProvider>(context, listen: false);
-
-                        await lessonProvider.refresh();
-
-                        if (mounted) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const Home()),
-                          );
-                        } else {}
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF58CC02),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 16),
-                        textStyle: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text("Next"),
-                    ),
                   ],
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _handleNextButtonPress,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF58CC02),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
+                    textStyle: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    disabledBackgroundColor: Colors.grey,
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : const Text("Next"),
+                ),
+              ),
+            ),
           ],
         ),
       ),

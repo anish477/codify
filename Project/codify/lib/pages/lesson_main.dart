@@ -12,6 +12,9 @@ import 'package:codify/lesson/topic.dart';
 import 'package:codify/lesson/lesson.dart';
 import '../widget/buildLivesDisplay.dart';
 import '../services/auth.dart';
+import '../user/redirect_add_profile.dart';
+import '../user/user_service.dart';
+import '../user/user.dart';
 
 class LessonMain extends StatefulWidget {
   const LessonMain({super.key});
@@ -20,52 +23,153 @@ class LessonMain extends StatefulWidget {
   State<LessonMain> createState() => _LessonMainState();
 }
 
-class _LessonMainState extends State<LessonMain> {
+class _LessonMainState extends State<LessonMain>
+    with AutomaticKeepAliveClientMixin<LessonMain> {
+  static bool _dataLoadedBefore = false;
+  static bool _isInitializing = false;
+
   String? _userId;
   bool _loadingUser = true;
+
+  int? _previousLives;
+  final NotificationService _notificationService = NotificationService();
+  LivesProvider? _livesProvider;
+  bool _listenersAdded = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+
+    if (!_dataLoadedBefore && !_isInitializing) {
+      print("LessonMain: First-time initialization");
+      _isInitializing = true;
+      _loadData();
+    } else {
+      print("LessonMain: Skipping initialization - already done before");
+
+      _loadingUser = false;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_listenersAdded && mounted) {
+      _livesProvider = Provider.of<LivesProvider>(context, listen: false);
+      _previousLives = _livesProvider!.lives?.currentLives;
+      _livesProvider!.addListener(_onLivesChanged);
+      _listenersAdded = true;
+    }
+  }
+
+  void _onLivesChanged() {
+    if (!mounted) return;
+
+    final lives = Provider.of<LivesProvider>(context, listen: false).lives;
+    final current = lives?.currentLives ?? 0;
+
+    if (_previousLives == 0 && current > 0) {
+      final id = DateTime.now().millisecondsSinceEpoch.remainder(100000);
+      _notificationService.scheduleLocalNotification(
+        id: id,
+        title: 'Lives Refilled!',
+        body: 'Your lives have refilled. Come back and learn!',
+        scheduledDateTime: DateTime.now().add(Duration(seconds: 1)),
+        payload: 'lives_refilled',
+      );
+    }
+
+    _previousLives = current;
+  }
+
+  @override
+  void dispose() {
+    _livesProvider?.removeListener(_onLivesChanged);
+    super.dispose();
   }
 
   Future<void> _loadData() async {
+    print("LessonMain: Starting _loadData");
     _userId = await AuthService().getUID();
+    print(
+        "LessonMain: User ID fetched: ${_userId != null ? 'available' : 'null'}");
+
     if (_userId != null) {
-      // Schedule the provider call after the first frame
+      final UserService _userService = UserService();
+      final users = await _userService.getUserByUserId(_userId!);
+      print("LessonMain: User profile fetched, exists: ${users.isNotEmpty}");
+
+      if (users.isEmpty) {
+        print(
+            "LessonMain: No user profile found, redirecting to profile creation");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => RedirectProfile()),
+            );
+          }
+        });
+        return;
+      }
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          // Check if the widget is still mounted
+          print("LessonMain: Loading user stats");
+
           Provider.of<UserStatProvider>(context, listen: false)
               .getUserStats()
               .then((_) {
+            print("LessonMain: User stats loaded successfully");
             if (mounted) {
-              // Check again after async operation
-              setState(() => _loadingUser = false);
+              setState(() {
+                _loadingUser = false;
+
+                _dataLoadedBefore = true;
+                _isInitializing = false;
+                print("LessonMain: loadingUser set to false");
+              });
             }
           }).catchError((error) {
-            // Handle potential errors during getUserStats
-            print("Error loading user stats: $error");
+            print("LessonMain ERROR: Error loading user stats: $error");
             if (mounted) {
-              setState(
-                  () => _loadingUser = false); // Still stop loading on error
+              setState(() {
+                _loadingUser = false;
+                _isInitializing = false;
+                print("LessonMain: loadingUser set to false after error");
+              });
             }
           });
         }
       });
     } else {
-      // Handle case when user Id could not be loaded
+      print("LessonMain: No user ID found");
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          setState(() => _loadingUser = false);
+          setState(() {
+            _loadingUser = false;
+            _isInitializing = false;
+            print("LessonMain: loadingUser set to false (no user ID)");
+          });
         }
       });
     }
   }
 
+  void refreshData() {
+    if (!mounted) return;
+    setState(() {
+      _loadingUser = true;
+    });
+    _loadData();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final lessonProvider = Provider.of<LessonProvider>(context);
     final livesProvider = Provider.of<LivesProvider>(context);
     final userStatProvider = Provider.of<UserStatProvider>(context);
@@ -73,6 +177,9 @@ class _LessonMainState extends State<LessonMain> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFFFFFFFF),
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -84,7 +191,7 @@ class _LessonMainState extends State<LessonMain> {
       ),
       backgroundColor: Color(0xFFFFFFFF),
       body: _loadingUser
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildInitialLoadingUI()
           : lessonProvider.loading
               ? _buildLoadingUI()
               : lessonProvider.error != null
@@ -93,6 +200,68 @@ class _LessonMainState extends State<LessonMain> {
                       ? const Center(child: Text("No categories to display"))
                       : _buildTopicAndLessonList(
                           lessonProvider, livesProvider, userStatProvider),
+    );
+  }
+
+  Widget _buildInitialLoadingUI() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header shimmer
+            Container(
+              height: 50,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Topics shimmer
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Container(
+                    height: 80,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopicAndLessonList(LessonProvider lessonProvider,
+      LivesProvider livesProvider, UserStatProvider userStatProvider) {
+    if (lessonProvider.topics.isEmpty) {
+      return const Center(child: Text("No topics available."));
+    }
+
+    return ListView.builder(
+      itemCount: lessonProvider.topics.length,
+      itemBuilder: (context, index) {
+        final Topic topic = lessonProvider.topics[index];
+
+        return _buildTopicItem(
+            context, lessonProvider, topic, livesProvider, userStatProvider);
+      },
     );
   }
 
@@ -170,20 +339,13 @@ class _LessonMainState extends State<LessonMain> {
     );
   }
 
-  Widget _buildTopicAndLessonList(LessonProvider lessonProvider,
+  Widget _buildTopicsList(LessonProvider lessonProvider,
       LivesProvider livesProvider, UserStatProvider userStatProvider) {
-    if (lessonProvider.topics.isEmpty) {
-      return const Center(child: Text("No topics available."));
-    }
-
-    return ListView.builder(
-      itemCount: lessonProvider.topics.length,
-      itemBuilder: (context, index) {
-        final Topic topic = lessonProvider.topics[index];
-
+    return Column(
+      children: lessonProvider.topics.map((Topic topic) {
         return _buildTopicItem(
             context, lessonProvider, topic, livesProvider, userStatProvider);
-      },
+      }).toList(),
     );
   }
 
@@ -195,7 +357,6 @@ class _LessonMainState extends State<LessonMain> {
       UserStatProvider userStatProvider) {
     return GestureDetector(
       onTap: () {
-        // Only toggle the expansion state, don't fetch lessons here
         lessonProvider.toggleTopic(topic.documentId);
       },
       child: AnimatedContainer(
@@ -232,20 +393,10 @@ class _LessonMainState extends State<LessonMain> {
       headerColor: Color(0xFFFA881B),
       lessonColor: Color(0xFFFF9400),
     ),
-
     "default": _TopicColors(
       headerColor: Color(0xFF7AC70C),
       lessonColor: Color(0xFF8EE000),
     ),
-
-    // "default" : _TopicColors(
-    //   headerColor: Color(0xFFD33131),
-    //   lessonColor: Color(0xFFe53B3B),
-    // ),
-    // "default" : _TopicColors(
-    //   headerColor: Color(0xFF4C4C4C),
-    //   lessonColor: Color(0xFF777777),
-    // ),
   };
 
   Widget _buildLessonList(
@@ -266,11 +417,34 @@ class _LessonMainState extends State<LessonMain> {
     }
 
     final completedLessonIds = userStatProvider.questionIds;
+
+    bool allWritingCodeCompleted = false;
+    Topic? writingTopic;
+    for (var t in lessonProvider.topics) {
+      if (t.name == 'Writing Code') {
+        writingTopic = t;
+        break;
+      }
+    }
+    if (writingTopic != null) {
+      final writingTopicId = writingTopic.documentId;
+      final writingCodeLessons =
+          lessonProvider.lessons.where((l) => l.topicId == writingTopicId);
+      allWritingCodeCompleted = writingCodeLessons
+          .every((l) => completedLessonIds.contains(l.documentId));
+    }
+
     final Map<String, bool> lessonLockStatus = {};
+
+    final List<String> specialTopics = ['Numerical Data', 'TextData', 'Call'];
 
     for (int i = 0; i < lessons.length; i++) {
       final lesson = lessons[i];
-      if (i == 0) {
+
+      if (topic.name == 'Memory & Variable' &&
+          specialTopics.contains(topic.name)) {
+        lessonLockStatus[lesson.documentId] = !allWritingCodeCompleted;
+      } else if (i == 0) {
         lessonLockStatus[lesson.documentId] = false;
       } else {
         final previousLessonId = lessons[i - 1].documentId;
@@ -312,8 +486,7 @@ class _LessonMainState extends State<LessonMain> {
   }
 
   Widget _buildTopicHeader(Topic topic) {
-    final topicColors = _topicColors[topic.name] ??
-        _topicColors["default"]!; // Default if not found
+    final topicColors = _topicColors[topic.name] ?? _topicColors["default"]!;
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
@@ -369,6 +542,7 @@ class _LessonMainState extends State<LessonMain> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Complete the previous lesson first!'),
+            backgroundColor: Colors.orange,
             duration: Duration(seconds: 2),
           ),
         );
@@ -384,9 +558,7 @@ class _LessonMainState extends State<LessonMain> {
             context,
             MaterialPageRoute(
               builder: (context) => UserLessonContent(
-                  documentId: lesson.documentId, // lessonId
-                  topicId: topic.documentId // Pass topicId
-                  ),
+                  documentId: lesson.documentId, topicId: topic.documentId),
             ),
           );
           if (mounted && _userId != null) {
@@ -406,9 +578,7 @@ class _LessonMainState extends State<LessonMain> {
             context,
             MaterialPageRoute(
               builder: (context) => UserLessonContent(
-                  documentId: lesson.documentId, // lessonId
-                  topicId: topic.documentId // Pass topicId
-                  ),
+                  documentId: lesson.documentId, topicId: topic.documentId),
             ),
           );
           if (mounted && _userId != null) {
@@ -457,7 +627,6 @@ class _LessonMainState extends State<LessonMain> {
             color: Colors.grey[400], size: 28));
   }
 
-  // Circle Icon Widget
   Widget _circleIcon(IconData icon, Color bgColor, {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
@@ -484,7 +653,9 @@ class _LessonMainState extends State<LessonMain> {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('No Lives Left'),
+          backgroundColor: const Color(0xFFFFFFFF),
+          title:
+              const Text('No Lives Left', style: TextStyle(color: Colors.red)),
           content: const Text(
               'You have run out of lives. We\'ll notify you when they refill.'),
           actions: <Widget>[

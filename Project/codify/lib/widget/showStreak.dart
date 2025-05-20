@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class StreakDisplay extends StatefulWidget {
-  const StreakDisplay({super.key});
+  const StreakDisplay({Key? key}) : super(key: key);
 
   @override
   State<StreakDisplay> createState() => _StreakDisplayState();
@@ -17,6 +17,7 @@ class _StreakDisplayState extends State<StreakDisplay>
   bool _isOverlayVisible = false;
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
+  final GlobalKey _streakDisplayKey = GlobalKey();
 
   @override
   void initState() {
@@ -38,34 +39,35 @@ class _StreakDisplayState extends State<StreakDisplay>
     if (_isOverlayVisible) return;
 
     final overlay = Overlay.of(context);
-    final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 0;
+
+    final RenderBox? renderBox =
+        _streakDisplayKey.currentContext?.findRenderObject() as RenderBox?;
+    Offset? position;
+    if (renderBox != null) {
+      position = renderBox.localToGlobal(Offset.zero);
+    }
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
+      builder: (context) => Stack(children: [
+        Positioned.fill(
             child: GestureDetector(
-              onTap: () {
-                _hideOverlay();
-              },
-              child: Container(
-                color: Colors.transparent,
-              ),
+          onTap: () {
+            _hideOverlay();
+          },
+          child: Container(color: Colors.transparent),
+        )),
+        Positioned(
+          top: position?.dy ?? 0 + kToolbarHeight,
+          right: 0,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Material(
+              color: Colors.transparent,
+              child: _buildOverlayContent(context),
             ),
           ),
-          Positioned(
-            top: appBarHeight,
-            right: 0,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Material(
-                color: Colors.transparent,
-                child: _buildOverlayContent(context),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ]),
     );
 
     overlay.insert(_overlayEntry!);
@@ -96,7 +98,7 @@ class _StreakDisplayState extends State<StreakDisplay>
             color: Colors.grey.withOpacity(0.5),
             spreadRadius: 3,
             blurRadius: 7,
-            offset: const Offset(0, -0.2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -128,16 +130,15 @@ class _StreakDisplayState extends State<StreakDisplay>
                 ),
               ],
             ),
-            const SizedBox(height: 10),
             Row(
               children: [
                 Icon(
                   streakProvider.streak?.currentStreak != null &&
-                      streakProvider.streak!.currentStreak > 0
+                          streakProvider.streak!.currentStreak > 0
                       ? Icons.local_fire_department
                       : Icons.local_fire_department_outlined,
                   color: streakProvider.streak?.currentStreak != null &&
-                      streakProvider.streak!.currentStreak > 0
+                          streakProvider.streak!.currentStreak > 0
                       ? Colors.orange
                       : Colors.grey,
                 ),
@@ -257,6 +258,7 @@ class _StreakDisplayState extends State<StreakDisplay>
     final streakProvider = Provider.of<StreakProvider>(context);
 
     return GestureDetector(
+      key: _streakDisplayKey,
       onTap: () {
         if (_isOverlayVisible) {
           _hideOverlay();
@@ -271,11 +273,11 @@ class _StreakDisplayState extends State<StreakDisplay>
             children: [
               Icon(
                 streakProvider.streak?.currentStreak != null &&
-                    streakProvider.streak!.currentStreak > 0
+                        streakProvider.streak!.currentStreak > 0
                     ? Icons.local_fire_department
                     : Icons.local_fire_department_outlined,
                 color: streakProvider.streak?.currentStreak != null &&
-                    streakProvider.streak!.currentStreak > 0
+                        streakProvider.streak!.currentStreak > 0
                     ? Colors.orange
                     : Colors.grey,
               ),

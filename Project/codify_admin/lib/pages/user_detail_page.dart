@@ -362,15 +362,15 @@ class _UserDetailPageState extends State<UserDetailPage> {
             ),
             const SizedBox(height: 24),
             const Divider(),
-            _buildDetailRow(context, Icons.person_outline, 'Name',
+            _buildDetailRow(context, 'Name',
                 _currentUser.name ?? 'N/A'),
-            _buildDetailRow(context, Icons.credit_card, 'User ID',
+            _buildDetailRow(context, 'User ID',
                 _currentUser.userId ?? 'N/A'),
-            _buildDetailRow(context, Icons.fingerprint, 'Document ID',
+            _buildDetailRow(context, 'Document ID',
                 _currentUser.documentId),
             if (isBlacklisted) ...[
               const Divider(),
-              _buildDetailRow(context, Icons.block, 'Blacklist Reason',
+              _buildDetailRow(context, 'Blacklist Reason',
                   _currentUser.blacklistReason ?? 'No reason specified',
                   valueColor: Colors.red),
             ],
@@ -381,15 +381,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
   }
 
   Widget _buildDetailRow(
-      BuildContext context, IconData icon, String label, String value,
+      BuildContext context, String label, String value,
       {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Theme.of(context).primaryColor, size: 20),
-          const SizedBox(width: 16),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,0 +1,33 @@
+flutter_native_splash:
+ 
+  color: "#F9C222"
+
+ 
+  image: "assets/logo5.png"
+  branding: "assets/brand.png"
+  branding_mode: bottom
+  branding_bottom_padding: 200
+
+ 
+
+  android: true
+  ios: true
+  web: false
+
+
+  fullscreen: false
+
+
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  web_image_mode: contain
+
+
+  android_12:
+    image: "assets/logo5.png"
+    color: "#F9C222"
+    icon_background_color: "#F9C222"
+    branding: "assets/brand.png"
+  
+
+

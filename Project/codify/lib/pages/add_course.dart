@@ -1,4 +1,3 @@
-import 'package:codify/provider/lesson_provider.dart';
 import 'package:codify/provider/profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -77,6 +76,7 @@ class _AddCourseState extends State<AddCourse> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFFFF),
           title: const Text("Delete Course"),
           content: const Text("Are you sure you want to delete this course?"),
           actions: <Widget>[

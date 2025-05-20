@@ -19,35 +19,102 @@ class ProfileProvider extends ChangeNotifier {
   final LeaderboardService _leaderboardService = LeaderboardService();
 
   bool isLoading = false;
+  bool isUploading = false;
   bool graphDataLoaded = false;
   List<ImageModel> images = [];
   UserDetail? user;
   Map<String, int> userDailyPoints = {};
   bool _initialized = false;
+  Timer? _graphRefreshTimer;
+  StreamSubscription? _pointsUpdatesSubscription;
 
   bool get initialized => _initialized;
 
   StreamSubscription? _userStreamSubscription;
 
   ProfileProvider() {
-    fetchData();
+    _graphRefreshTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      if (!isLoading && _initialized) {
+        _refreshGraphData();
+      }
+    });
+  }
+
+ 
+  void checkUserBlacklisted(BuildContext context) {
+    if (user != null && user!.isBlacklisted) {
+      String message = 'Your account has been blacklisted.';
+      if (user!.blacklistReason != null && user!.blacklistReason!.isNotEmpty) {
+        message += '\n\nReason: ${user!.blacklistReason}';
+      }
+
+
+      showDialog(
+        context: context,
+        barrierDismissible: false, 
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Color(0xFFFFFFFF),
+            title: const Text('Account Restricted',
+                style: TextStyle(color: Colors.red)),
+            content: Text(message, style: const TextStyle(color: Colors.blue)),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK', style: TextStyle(color: Colors.green)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  
+                  signOut(context);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _refreshGraphData() async {
+    graphDataLoaded = false;
+    notifyListeners();
+
+    try {
+      await _fetchUserPoints();
+    } catch (e) {
+      print('Error refreshing graph data: $e');
+    }
+
+    notifyListeners();
   }
 
   Future<void> fetchData() async {
-    if (_initialized) return;
+    print(
+        "ProfileProvider: fetchData called, isLoading=$isLoading, initialized=$_initialized, user=${user != null ? 'available' : 'null'}");
+    if (isLoading || (_initialized && !images.isEmpty && user != null)) {
+      print(
+          "ProfileProvider: Skipping fetchData due to already loading or initialized state");
+      return;
+    }
     _initialized = true;
     isLoading = true;
     graphDataLoaded = false;
     notifyListeners();
+    print("ProfileProvider: Starting data fetching process");
     try {
       await _fetchUserImage();
+      print("ProfileProvider: User images fetched: ${images.length}");
+
       await _fetchUserData();
+      print("ProfileProvider: User data fetch initiated");
+
       await _fetchUserPoints();
+      print("ProfileProvider: User points fetched");
     } catch (e) {
-      print('Error fetching profile data: $e');
+      print("ProfileProvider ERROR: ${e.toString()}");
     }
     isLoading = false;
     notifyListeners();
+    print("ProfileProvider: Data loading completed, isLoading set to false");
   }
 
   Future<void> _fetchUserImage() async {
@@ -67,6 +134,12 @@ class ProfileProvider extends ChangeNotifier {
         if (users.isNotEmpty) {
           user = users.first;
           notifyListeners();
+
+          
+          if (user != null && user!.isBlacklisted) {
+            print(
+                "ProfileProvider: User is blacklisted: ${user!.blacklistReason}");
+          }
         }
       });
     }
@@ -81,36 +154,90 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  
+  void refreshAfterPointsUpdate() {
+    _refreshGraphData();
+  }
+
+  
+  Future<void> refreshProfile() async {
+    if (isLoading) return;
+
+    graphDataLoaded = false;
+    notifyListeners();
+
+    try {
+      await _fetchUserPoints();
+    } catch (e) {
+      print('Error refreshing profile data: $e');
+    }
+
+    notifyListeners();
+  }
+
+
+  bool _isPickerActive = false;
+
   Future<void> pickAndUploadImage(BuildContext context) async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-    final cropped = await ImageCropper().cropImage(
-      sourcePath: picked.path,
-      compressFormat: ImageCompressFormat.jpg,
-      compressQuality: 100,
-      uiSettings: <PlatformUiSettings>[
-        AndroidUiSettings(
-          toolbarColor: Colors.blue,
-          backgroundColor: Colors.black,
-          dimmedLayerColor: Colors.black54,
-          lockAspectRatio: true,
-        ),
-        IOSUiSettings(
-          title: 'Crop Image',
-          aspectRatioLockEnabled: true,
-        ),
-      ],
-    );
-    if (cropped == null) return;
-    final imageUrl =
-        await _uploadImageService.uploadImage(context, XFile(cropped.path));
-    if (imageUrl != null) {
-      if (images.isNotEmpty) {
-        await _updateImage(images.first.documentId, imageUrl);
-      } else {
-        await _addImage(imageUrl);
+    
+    if (_isPickerActive || isUploading) {
+      print('Image picker or upload already in progress');
+      return;
+    }
+
+    try {
+      _isPickerActive = true;
+      final picked = await _picker.pickImage(source: ImageSource.gallery);
+      _isPickerActive = false;
+
+      if (picked == null) return;
+
+      isUploading = true;
+      notifyListeners();
+
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 100,
+        uiSettings: <PlatformUiSettings>[
+          AndroidUiSettings(
+            toolbarColor: Colors.blue,
+            backgroundColor: Colors.black,
+            dimmedLayerColor: Colors.black54,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+
+      if (cropped == null) {
+        isUploading = false;
+        notifyListeners();
+        return;
       }
-      await _fetchUserImage();
+
+      final imageUrl =
+          await _uploadImageService.uploadImage(context, XFile(cropped.path));
+
+      if (imageUrl != null) {
+        if (images.isNotEmpty) {
+          await _updateImage(images.first.documentId, imageUrl);
+        } else {
+          await _addImage(imageUrl);
+        }
+        await _fetchUserImage();
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload image. Please try again.')),
+      );
+    } finally {
+      isUploading = false;
+      notifyListeners();
     }
   }
 
@@ -143,12 +270,46 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   Future<void> signOut(BuildContext context) async {
+    
+    _cancelAllSubscriptions();
+
+   
+    _initialized = false;
+    isLoading = false;
+    graphDataLoaded = false;
+    images.clear();
+    user = null;
+    userDailyPoints.clear();
+    notifyListeners();
+
+    
     await _auth.signOut(context);
+  }
+
+  
+  void _cancelAllSubscriptions() {
+    if (_userStreamSubscription != null) {
+      _userStreamSubscription!.cancel();
+      _userStreamSubscription = null;
+      print("ProfileProvider: Cancelled user stream subscription");
+    }
+
+    if (_graphRefreshTimer != null) {
+      _graphRefreshTimer!.cancel();
+      _graphRefreshTimer = null;
+      print("ProfileProvider: Cancelled graph refresh timer");
+    }
+
+    if (_pointsUpdatesSubscription != null) {
+      _pointsUpdatesSubscription!.cancel();
+      _pointsUpdatesSubscription = null;
+      print("ProfileProvider: Cancelled points updates subscription");
+    }
   }
 
   @override
   void dispose() {
-    _userStreamSubscription?.cancel();
+    _cancelAllSubscriptions();
     super.dispose();
   }
 

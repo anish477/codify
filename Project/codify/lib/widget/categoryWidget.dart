@@ -39,15 +39,13 @@ class _CategoryDisplayState extends State<CategoryDisplay>
     final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 0;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children:[
-          Positioned.fill(child: GestureDetector(
-            onTap: (){
-              _hideOverlay();
-            },
-          )),
-
-          Positioned(
+      builder: (context) => Stack(children: [
+        Positioned.fill(child: GestureDetector(
+          onTap: () {
+            _hideOverlay();
+          },
+        )),
+        Positioned(
           top: appBarHeight,
           right: 0,
           child: SlideTransition(
@@ -58,8 +56,7 @@ class _CategoryDisplayState extends State<CategoryDisplay>
             ),
           ),
         ),
-        ]
-      ),
+      ]),
     );
 
     overlay.insert(_overlayEntry!);
@@ -79,8 +76,10 @@ class _CategoryDisplayState extends State<CategoryDisplay>
 
   Widget _buildOverlayContent(BuildContext context) {
     final lessonProvider = Provider.of<LessonProvider>(context, listen: false);
-    final List<String> selectedCategories = lessonProvider.selectedCategories;
-    final List<String> allCategories = lessonProvider.userLessons.map((e) => e.userCategoryName ?? "No Name").toList();
+
+    final List<String> allCategories = lessonProvider.userLessons
+        .map((e) => e.userCategoryName ?? "No Name")
+        .toList();
 
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -106,7 +105,7 @@ class _CategoryDisplayState extends State<CategoryDisplay>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Chose Lesson",
+                  "Choose Lesson",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -124,7 +123,6 @@ class _CategoryDisplayState extends State<CategoryDisplay>
                 ),
               ],
             ),
-            // const SizedBox(height: 10),
             Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
@@ -132,8 +130,6 @@ class _CategoryDisplayState extends State<CategoryDisplay>
                 return _buildCategoryCard(category, lessonProvider);
               }).toList(),
             ),
-
-
           ],
         ),
       ),
@@ -141,11 +137,23 @@ class _CategoryDisplayState extends State<CategoryDisplay>
   }
 
   Widget _buildCategoryCard(String category, LessonProvider lessonProvider) {
-    bool isSelected = lessonProvider.selectedCategories.contains(category);
+    bool isSelected = lessonProvider.selectedCategoryName == category;
+
+    final matchingLesson = lessonProvider.userLessons.firstWhere(
+      (lesson) => lesson.userCategoryName == category,
+      orElse: () => lessonProvider.userLessons.first,
+    );
+
     return GestureDetector(
       onTap: () {
-        lessonProvider.selectCategory(category, lessonProvider.userLessons.firstWhere((lesson) => lesson.userCategoryName == category).userCategoryId);
-        _hideOverlay();
+        if (matchingLesson.userCategoryId != null) {
+          print(
+              "Selecting category: $category with ID: ${matchingLesson.userCategoryId}");
+
+          lessonProvider.selectCategory(
+              category, matchingLesson.userCategoryId!);
+          _hideOverlay();
+        }
       },
       child: Card(
         color: isSelected ? Colors.blue[200] : Colors.grey[200],
@@ -157,7 +165,8 @@ class _CategoryDisplayState extends State<CategoryDisplay>
     );
   }
 
-  Widget _buildSelectedCategoryCard(String category, LessonProvider lessonProvider) {
+  Widget _buildSelectedCategoryCard(
+      String category, LessonProvider lessonProvider) {
     return GestureDetector(
       onTap: () {
         lessonProvider.toggleCategory(category);
@@ -194,6 +203,11 @@ class _CategoryDisplayState extends State<CategoryDisplay>
   Widget build(BuildContext context) {
     final lessonProvider = Provider.of<LessonProvider>(context);
 
+    final String displayText =
+        lessonProvider.selectedCategoryName ?? " Choose Lesson";
+
+    print("Selected category: ${lessonProvider.selectedCategoryName}");
+
     return GestureDetector(
       onTap: () {
         if (_isOverlayVisible) {
@@ -207,7 +221,15 @@ class _CategoryDisplayState extends State<CategoryDisplay>
         children: [
           Row(
             children: [
-              Text("${lessonProvider.selectedCategoryName}"),
+              Text(
+                displayText,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_drop_down, color: Colors.black87),
             ],
           ),
         ],

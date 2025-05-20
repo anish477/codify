@@ -1,5 +1,8 @@
+import 'package:codify/pages/badge_provider.dart';
 import 'package:codify/pages/lesson_completed_page.dart';
+import 'package:codify/provider/leaderboard_provider.dart';
 import 'package:codify/provider/lives_provider.dart';
+import 'package:codify/provider/profile_provider.dart';
 import 'package:codify/provider/user_stat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -15,18 +18,17 @@ import '../user/user_mistake.dart';
 import '../user/user_mistake_service.dart';
 import '../services/auth.dart';
 import '../gamification/leaderboard_service.dart';
-import '../gamification/streak_service.dart';
 import '../gamification/lives_service.dart';
 import '../gamification/lives.dart';
+import '../gamification/badge_service.dart';
+import '../lesson/lesson_service.dart';
 
 class UserLessonContent extends StatefulWidget {
-  final String documentId; // This is the lessonId
-  final String topicId; // Add topicId field
+  final String documentId;
+  final String topicId;
 
   const UserLessonContent(
-      {super.key,
-      required this.documentId,
-      required this.topicId}); // Update constructor
+      {super.key, required this.documentId, required this.topicId});
 
   @override
   State<UserLessonContent> createState() => _UserLessonContentState();
@@ -37,19 +39,16 @@ class _UserLessonContentState extends State<UserLessonContent> {
   final UserMistakeService _userMistakeService = UserMistakeService();
   final AuthService _auth = AuthService();
   final LeaderboardService _leaderboardService = LeaderboardService();
-  final StreakService _streakService = StreakService();
   final LivesService _livesService = LivesService();
   bool _isSubmittingFinal = false;
 
   List<Question> _questions = [];
   int _currentQuestionIndex = 0;
   bool _isCorrectAnswer = false;
-  bool _showFeedback = false;
   bool _isLoading = true;
   int lessonPoints = 0;
   Lives? _lives;
 
-  // Metrics for lesson completion
   DateTime _lessonStartTime = DateTime.now();
   int _correctAnswers = 0;
   int _totalAttempts = 0;
@@ -96,7 +95,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
     if (_questions[_currentQuestionIndex].correctOption == selectedOption) {
       setState(() {
         _isCorrectAnswer = true;
-        _showFeedback = true;
         lessonPoints += _questions[_currentQuestionIndex].rewards;
         _correctAnswers++;
       });
@@ -125,18 +123,39 @@ class _UserLessonContentState extends State<UserLessonContent> {
             final userStatProvider =
                 Provider.of<UserStatProvider>(context, listen: false);
             await userStatProvider.markQuestionAsComplete(
-                user,
-                widget
-                    .topicId, // Correct: Pass the topicId received by the widget
-                widget
-                    .documentId // Correct: Pass the lessonId (which is widget.documentId)
-                );
+                user, widget.topicId, widget.documentId);
+
+            final badgeService = BadgeService();
+            await badgeService.awardFirstLessonBadge(user, widget.topicId);
+
+            final lessonService = LessonService();
+            final lessons =
+                await lessonService.getLessonsByTopicId(widget.topicId);
+            bool allMastered = true;
+            for (var lesson in lessons) {
+              final qs = await _questionService
+                  .getQuestionsForLesson(lesson.documentId);
+              for (var q in qs) {
+                if (!userStatProvider.questionIds.contains(q.documentId)) {
+                  allMastered = false;
+                  break;
+                }
+              }
+              if (!allMastered) break;
+            }
+            if (allMastered) {
+              await badgeService.awardTopicMasteryBadge(user, widget.topicId);
+            }
 
             double accuracy = _totalAttempts > 0
                 ? (_correctAnswers / _totalAttempts) * 100.0
                 : 0.0;
 
-            // Hiding loading before navigation
+            await Provider.of<LeaderboardProvider>(context, listen: false)
+                .refreshLeaderboard();
+            await Provider.of<ProfileProvider>(context, listen: false)
+                .refreshProfile();
+
             if (mounted) {
               setState(() {
                 _isSubmittingFinal = false;
@@ -146,15 +165,27 @@ class _UserLessonContentState extends State<UserLessonContent> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => LessonCompletedPage(
-                            pointsEarned: lessonPoints,
-                            lessonId: widget.documentId,
-                            timeToComplete:
-                                DateTime.now().difference(_lessonStartTime),
-                            accuracy: accuracy,
-                          )));
+                          pointsEarned: lessonPoints,
+                          lessonId: widget.documentId,
+                          timeToComplete:
+                              DateTime.now().difference(_lessonStartTime),
+                          accuracy: accuracy,
+                          newStreak: Provider.of<StreakProvider>(context,
+                                  listen: false)
+                              .streak
+                              ?.currentStreak,
+                          newBadge:
+                              Provider.of<BadgeProvider>(context, listen: false)
+                                      .badges
+                                      .isNotEmpty
+                                  ? Provider.of<BadgeProvider>(context,
+                                          listen: false)
+                                      .badges
+                                      .last
+                                      .name
+                                  : null)));
             }
           } catch (e) {
-            // Handling errors and reset loading state
             print('Error completing lesson: $e');
             if (mounted) {
               setState(() {
@@ -178,7 +209,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
       }
       setState(() {
         _isCorrectAnswer = false;
-        _showFeedback = true;
       });
       final user = await _auth.getUID();
       if (user != null) {
@@ -193,15 +223,31 @@ class _UserLessonContentState extends State<UserLessonContent> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(_isCorrectAnswer ? 'Correct!' : 'Incorrect!'),
-          content: Text(
-            _isCorrectAnswer
-                ? 'Well done!'
-                : 'Incorrect answer, try again!\nFeedback: ${_questions[_currentQuestionIndex].feedback}',
-          ),
+          backgroundColor: Color(0xFFFFFFFF),
+          title: _isCorrectAnswer
+              ? const Text('Correct!',
+                  style: TextStyle(color: Color.fromARGB(255, 21, 216, 14)))
+              : const Text('Incorrect!', style: TextStyle(color: Colors.red)),
+          content: _isCorrectAnswer
+              ? const Text('Great job!',
+                  style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold))
+              : Text(
+                  'Feedback:\n${_questions[_currentQuestionIndex].feedback}',
+                  style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500),
+                ),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
+              child: const Text('OK',
+                  style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF00C7BE),
+                      fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -218,7 +264,11 @@ class _UserLessonContentState extends State<UserLessonContent> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('No Lives Left'),
+          backgroundColor: Color(0xFFFFFFFF),
+          title: const Text(
+            'No Lives Left',
+            style: TextStyle(color: Colors.red),
+          ),
           content: const Text(
               'You have run out of lives. Please wait for them to refill.'),
           actions: <Widget>[
@@ -242,7 +292,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
         ? (_currentQuestionIndex + 1) / _questions.length
         : 0.0;
 
-    // Building the main contain of the screen
     Widget mainContent = Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -383,7 +432,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
                 ),
     );
 
-    //Ui to indicate the completion of lesson
     return Stack(
       children: [
         mainContent,
@@ -400,13 +448,6 @@ class _UserLessonContentState extends State<UserLessonContent> {
                       color: Color(0xFF1cb0f6),
                     ),
                     SizedBox(height: 16),
-                    // Text(
-                    //   "Completing lesson...",
-                    //   style: TextStyle(
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold
-                    //   ),
-                    // ),
                   ],
                 ),
               ),

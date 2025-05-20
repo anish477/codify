@@ -144,6 +144,7 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: ListTile(
+                              tileColor: const Color(0xFFFFFFFF),
                               title: Text(option,
                                   style: const TextStyle(fontSize: 16)),
                             ),

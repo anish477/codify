@@ -8,6 +8,8 @@ class UserDetail {
   late final bool hasBeenRedirected;
   final bool profileComplete;
   String? fcmToken;
+  final bool isBlacklisted;
+  final String? blacklistReason;
 
   UserDetail({
     required this.documentId,
@@ -17,6 +19,8 @@ class UserDetail {
     this.hasBeenRedirected = false,
     this.profileComplete = false,
     required this.fcmToken,
+    this.isBlacklisted = false,
+    this.blacklistReason,
   });
 
   factory UserDetail.fromDocument(DocumentSnapshot doc) {
@@ -29,6 +33,8 @@ class UserDetail {
       hasBeenRedirected: data['hasBeenRedirected'] ?? false,
       profileComplete: data['profileComplete'] ?? false,
       fcmToken: data['fcmToken'],
+      isBlacklisted: data['isBlacklisted'] ?? false,
+      blacklistReason: data['blacklistReason'],
     );
   }
 
@@ -39,7 +45,9 @@ class UserDetail {
       'userId': userId,
       'hasBeenRedirected': hasBeenRedirected,
       'profileComplete': profileComplete,
-      'fcmToken':fcmToken,
+      'fcmToken': fcmToken,
+      'isBlacklisted': isBlacklisted,
+      'blacklistReason': blacklistReason,
     };
   }
 }

@@ -64,11 +64,13 @@ class AddProfile extends StatelessWidget {
                                       border: OutlineInputBorder()),
                                   keyboardType: TextInputType.number,
                                   validator: (v) {
-                                    if (v == null || v.isEmpty)
+                                    if (v == null || v.isEmpty) {
                                       return 'Please enter your age';
+                                    }
                                     if (int.tryParse(v) == null ||
-                                        int.parse(v) <= 0)
+                                        int.parse(v) <= 0) {
                                       return 'Please enter a valid age';
+                                    }
                                     return null;
                                   },
                                 ),
@@ -81,9 +83,9 @@ class AddProfile extends StatelessWidget {
                                     if (form.validate()) {
                                       final success =
                                           await provider.saveProfile(context);
-                                      if (success && context.mounted)
+                                      if (success && context.mounted) {
                                         Navigator.of(context).pop(true);
-                                      else if (context.mounted)
+                                      } else if (context.mounted)
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(const SnackBar(
                                                 content: Text(
@@ -108,10 +110,6 @@ class AddProfile extends StatelessWidget {
                     }),
                   ),
                 ),
-                if (provider.isSaving)
-                  Container(
-                      color: Colors.black.withOpacity(0.5),
-                      child: const Center(child: CircularProgressIndicator())),
               ],
             ),
           );
